@@ -1,7 +1,7 @@
 const http = require('http');
-const app = require('./app')
+const router = require('./router/routes')
 const port = process.env.port || 3000;
-const server = http.createServer(app);
+const server = http.createServer(router);
 ////
 const express = require('express');
 var mysql = require('mysql');
