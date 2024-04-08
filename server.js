@@ -53,17 +53,28 @@ con.connect(function(err) {
   
   console.log("Connected!");
   
-  //Product Api to get Product Details
+  
+  //get api for all product list
   app.get('/product', (req, res) => {
     con.query('SELECT * FROM product', (err, results) => {
       if (err) throw err;
       res.json(results);
     });
   });
+  //get api for all user list
+  app.get('/user', (req, res) => {
+    con.query('SELECT * FROM user', (err, results) => {
+      if (err) throw err;
+      res.json(results);
+    });
+  });
+
+/////////
 });
 
 
-//get api for all product list
+
+
 
 
 
