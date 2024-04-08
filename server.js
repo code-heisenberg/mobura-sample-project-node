@@ -17,6 +17,8 @@ const { PRIORITY_BELOW_NORMAL, R_OK } = require('constants');
 const { count } = require('console');
 const { callbackify } = require('util');
 const { appendFile } = require('fs');
+const emailValidator = require('deep-email-validator');
+const validator = require('email-validator');
 const app = express();
 
 //Db Connection Code Below
@@ -52,6 +54,7 @@ con.connect(function(err) {
   }
   
   console.log("Connected!");
+  //EmailValidation Async Function
   
   
   //get api for all product list
@@ -75,6 +78,56 @@ con.connect(function(err) {
       res.json(results);
     });
   });
+  //User SingUp
+  app.post('/signin',  (req, res, next)=>  {
+    const { user_id,email,name,dob,address,token } = req.body;
+     const emailid = req.body.email; 
+    if(!emailid)
+    {
+      return res.status(400).send({
+        message: "Email  Missing."
+      })
+    }
+    if(!name)
+    {
+      return res.status(400).send({
+        message: "Name Missing"
+      })
+    }
+    if(!dob)
+    {
+      return res.status(400).send({
+        message: "Date Of Birth Missing"
+      })
+    }
+    if(!address)
+    {
+      return res.status(400).send({
+        message: "Address Missing"
+      })
+    }
+
+     isvalid = validator.validate(emailid);
+
+    if (isvalid)
+    {
+      con.query('INSERT INTO user (user_id,email,name,dob,address,token) VALUES (?, ?,?,?,?,?)', [user_id,email,name,dob,address,token], (err, result) => {
+        if (err) throw err;
+        res.json({ message: 'User added successfully', id: result.insertId });
+      });
+      return res.send({message: "User Details Updated"}
+    );
+    }
+  
+    return res.status(400).send({
+      message: "Please provide a valid email address.",
+      reason: validators[reason].reason
+    })
+    
+
+    
+  });
+  
 /////////
 });
 
