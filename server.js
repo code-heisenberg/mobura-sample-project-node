@@ -68,7 +68,13 @@ con.connect(function(err) {
       res.json(results);
     });
   });
-
+  //get api for all order list
+  app.get('/orders', (req, res) => {
+    con.query('SELECT * FROM orders', (err, results) => {
+      if (err) throw err;
+      res.json(results);
+    });
+  });
 /////////
 });
 
