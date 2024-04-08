@@ -1,7 +1,7 @@
 const http = require('http');
-const router = require('./router/routes')
+//const router = require('./router/routes')
 const port = process.env.port || 3000;
-const server = http.createServer(router);
+//const server = http.createServer(router);
 ////
 const express = require('express');
 var mysql = require('mysql');
@@ -16,7 +16,8 @@ const { connected } = require('process');
 const { PRIORITY_BELOW_NORMAL, R_OK } = require('constants');
 const { count } = require('console');
 const { callbackify } = require('util');
-//const app = express();
+const { appendFile } = require('fs');
+const app = express();
 
 //Db Connection Code Below
 //app.use(express.static('public'));
@@ -31,6 +32,8 @@ const { callbackify } = require('util');
 //SERVER LISTENING-PORT 
 var APP_PORT = '3000'
 // SQL-connec -STRiNG
+app.use(express.json())
+//Database Connection Area
 var con = mysql.createConnection({
   // return mysql.createconnec({
   host: 'localhost',
@@ -50,14 +53,20 @@ con.connect(function(err) {
   
   console.log("Connected!");
   
-  //con.query('select * from product', function (err, result) {
-  //  if (err) throw err;
- //   console.log("Result: " + result);
-  //});
+  //Product Api to get Product Details
+  app.get('/product', (req, res) => {
+    con.query('SELECT * FROM product', (err, results) => {
+      if (err) throw err;
+      res.json(results);
+    });
+  });
 });
+
+
+//get api for all product list
 
 
 
 ///Local Server Start Code
-server.listen(port);
+app.listen(port);
 
