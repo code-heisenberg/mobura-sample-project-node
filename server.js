@@ -62,7 +62,7 @@ con.connect(function(err) {
   var checkuser;
   var emailcount;
   var namecount;
-
+  const salt =10
   //get api for all product list
   app.get('/product', (req, res) => {
     con.query('SELECT * FROM product', (err, results) => {
@@ -70,8 +70,8 @@ con.connect(function(err) {
       res.json(results);
     });
   });
-  //get api for all user list
-  app.get('/user/validateToken', (req, res) => {
+  //get api for user sigin jwt validation
+  app.get('/signin/id/validateToken', (req, res) => {
     let tokenHeaderKey = process.env.TOKEN_HEADER_KEY;
     let jwtSecretKey = process.env.JWT_SECRET_KEY;
     try {
@@ -79,22 +79,23 @@ con.connect(function(err) {
 
       const verified = jwt.verify(token, jwtSecretKey);
       if (verified) {
+        con.query('SELECT * FROM user', (err, results) => {
+          if (err) throw err;
+          res.json(results);
+         });
           return res.send("Successfully Verified");
       } else {
           // Access Denied
           return res.status(401).send(error);
       }
-  } catch (error) {
+     } catch (error) {
       // Access Denied
       return res.status(401).send(error);
-  }
-    con.query('SELECT * FROM user', (err, results) => {
-      if (err) throw err;
-      res.json(results);
+     }
+     
     });
-  });
-//post api for user login
-app.post('/user/generateToken', (req, res) => {
+//post api for user login and jwt generation
+app.post('/signin/id/generateToken', (req, res) => {
   let jwtSecretKey = process.env.JWT_SECRET_KEY;
     let data = {
         time: Date(),
@@ -103,12 +104,19 @@ app.post('/user/generateToken', (req, res) => {
     const token = jwt.sign(data, jwtSecretKey);
  
     res.send(token);
-  con.query('SELECT * FROM user', (err, results) => {
+  con.query('INSERT INTO login (usercount,username,password,token) VALUES (?, ?,?,?,?,?)', [usercount,username,dob,passsword,token], (err, results) => {
     if (err) throw err;
     res.json(results);
   });
 });
 
+//get api for all User List
+app.get('/user', (req, res) => {
+  con.query('SELECT * FROM user', (err, results) => {
+    if (err) throw err;
+    res.json(results);
+  });
+});
   //get api for all order list
   app.get('/orders', (req, res) => {
     con.query('SELECT * FROM orders', (err, results) => {
@@ -117,8 +125,8 @@ app.post('/user/generateToken', (req, res) => {
     });
   });
   //User SingUp
-  app.post('/signup',  (req, res, next)=>  {
-    const { user_id,email,name,dob,address,token } = req.body;
+   app.post('/signup',  (req, res, next)=>  {
+    const { user_id,email,name,dob,address,password } = req.body;
      const emailid = req.body.email; 
      
     if(!emailid)
@@ -152,16 +160,28 @@ app.post('/user/generateToken', (req, res) => {
       if (err) throw err;
       
       emailcount = results[0].count;
+      
       console.log("Count=>"+emailcount)
       //Code Below to insert New Emailid based User
       if (isvalid && emailcount==0)
       {
-       con.query('INSERT INTO user (user_id,email,name,dob,address,token) VALUES (?, ?,?,?,?,?)', [user_id,email,name,dob,address,token], (err, result) => {
-         if (err) throw err;
-         //res.json({ message: 'User added successfully' });
-       });
-       return res.send({message: "User Details Registered"}
-       );
+       var bycryptpassword = req.body.password
+       bcrypt.hash(bycryptpassword.toString(),salt,(err,hash)=>{
+        if(err)
+        {
+          console.log(err);
+        }
+        var bycrypted = hash;
+        con.query('INSERT INTO user (user_id,email,name,dob,address,password) VALUES (?, ?,?,?,?,?)', [user_id,email,name,dob,address,bycrypted], (err, result) => {
+          if (err) throw err;
+          res.json({ message: 'User added successfully' });
+        });
+
+       }) 
+       
+       
+       //return res.send({message: "User Details Registered"}
+       //);
      }
      if(emailcount>0)
       {
