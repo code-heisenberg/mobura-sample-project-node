@@ -4,6 +4,7 @@ const port = process.env.port || 3000;
 //const server = http.createServer(router);
 ////
 const express = require('express');
+const dotenv = require('dotenv');
 var mysql = require('mysql');
 var bodyparser = require('body-parser');
 var moment = require('moment');
@@ -20,7 +21,7 @@ const { appendFile } = require('fs');
 const emailValidator = require('deep-email-validator');
 const validator = require('email-validator');
 const app = express();
-
+dotenv.config()
 //Db Connection Code Below
 //app.use(express.static('public'));
 //app.use(bodyparser.urlencoded({ extended: true }));
@@ -44,7 +45,7 @@ var con = mysql.createConnection({
   database: 'shoppingcartal',
   port: '3306',
   /////////////////////////////
-  //})
+  
 })
 con.connect(function(err) {
   if (err)
@@ -55,8 +56,13 @@ con.connect(function(err) {
   
   console.log("Connected!");
   //EmailValidation Async Function
-  
-  
+  const users = [];
+  const press ={};
+  var checkemail;
+  var checkuser;
+  var emailcount;
+  var namecount;
+
   //get api for all product list
   app.get('/product', (req, res) => {
     con.query('SELECT * FROM product', (err, results) => {
@@ -65,12 +71,44 @@ con.connect(function(err) {
     });
   });
   //get api for all user list
-  app.get('/user', (req, res) => {
+  app.get('/user/validateToken', (req, res) => {
+    let tokenHeaderKey = process.env.TOKEN_HEADER_KEY;
+    let jwtSecretKey = process.env.JWT_SECRET_KEY;
+    try {
+      const token = req.header(tokenHeaderKey);
+
+      const verified = jwt.verify(token, jwtSecretKey);
+      if (verified) {
+          return res.send("Successfully Verified");
+      } else {
+          // Access Denied
+          return res.status(401).send(error);
+      }
+  } catch (error) {
+      // Access Denied
+      return res.status(401).send(error);
+  }
     con.query('SELECT * FROM user', (err, results) => {
       if (err) throw err;
       res.json(results);
     });
   });
+//post api for user login
+app.post('/user/generateToken', (req, res) => {
+  let jwtSecretKey = process.env.JWT_SECRET_KEY;
+    let data = {
+        time: Date(),
+        userId: 12,
+    }
+    const token = jwt.sign(data, jwtSecretKey);
+ 
+    res.send(token);
+  con.query('SELECT * FROM user', (err, results) => {
+    if (err) throw err;
+    res.json(results);
+  });
+});
+
   //get api for all order list
   app.get('/orders', (req, res) => {
     con.query('SELECT * FROM orders', (err, results) => {
@@ -79,9 +117,10 @@ con.connect(function(err) {
     });
   });
   //User SingUp
-  app.post('/signin',  (req, res, next)=>  {
+  app.post('/signup',  (req, res, next)=>  {
     const { user_id,email,name,dob,address,token } = req.body;
      const emailid = req.body.email; 
+     
     if(!emailid)
     {
       return res.status(400).send({
@@ -106,23 +145,44 @@ con.connect(function(err) {
         message: "Address Missing"
       })
     }
-
+     //Email validation inbuilt Function validator
      isvalid = validator.validate(emailid);
+     //Code Below to check Email Already Exits or Not
+     con.query('SELECT COUNT(*) AS count FROM user WHERE email=?',[emailid], (err, results) => {
+      if (err) throw err;
+      
+      emailcount = results[0].count;
+      console.log("Count=>"+emailcount)
+      //Code Below to insert New Emailid based User
+      if (isvalid && emailcount==0)
+      {
+       con.query('INSERT INTO user (user_id,email,name,dob,address,token) VALUES (?, ?,?,?,?,?)', [user_id,email,name,dob,address,token], (err, result) => {
+         if (err) throw err;
+         //res.json({ message: 'User added successfully' });
+       });
+       return res.send({message: "User Details Registered"}
+       );
+     }
+     if(emailcount>0)
+      {
+       res.send({message: "Email Already Exits With Us"})
+      }
+ 
+ 
+     if(isvalid==false)
+     {
+     return res.status(400).send({
+       message: "Please provide a valid email Address"
+       
+     })
+ 
+   }
+           
+      
+    });
+    
+              
 
-    if (isvalid)
-    {
-      con.query('INSERT INTO user (user_id,email,name,dob,address,token) VALUES (?, ?,?,?,?,?)', [user_id,email,name,dob,address,token], (err, result) => {
-        if (err) throw err;
-        res.json({ message: 'User added successfully', id: result.insertId });
-      });
-      return res.send({message: "User Details Updated"}
-    );
-    }
-  
-    return res.status(400).send({
-      message: "Please provide a valid email address.",
-      reason: validators[reason].reason
-    })
     
 
     
