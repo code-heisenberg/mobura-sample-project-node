@@ -114,11 +114,6 @@ con.connect(function (err) {
     }
     });
   });
-
-  //post api for user login and jwt generation
-  // app.post('/signin/generateToken', (req, res) => {
-  //   //Check User Data Matches with User Table
-
   //get api for all User List
   app.get('/user', (req, res) => {
     con.query('SELECT * FROM user', (err, results) => {
@@ -210,15 +205,10 @@ con.connect(function (err) {
           message: "Please provide a valid email Address"
 
         })
-
       }
-
-
     });
-
   });
-  /////////
-});
-//Local Server Start Code
+  });
+//Local Server Start Code Below
 app.listen(port);
 
