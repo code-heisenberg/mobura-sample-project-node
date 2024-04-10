@@ -63,6 +63,7 @@ con.connect(function(err) {
   var emailcount;
   var namecount;
   const salt =10
+  var plainpassword;
   //get api for all product list
   app.get('/product', (req, res) => {
     con.query('SELECT * FROM product', (err, results) => {
@@ -70,45 +71,59 @@ con.connect(function(err) {
       res.json(results);
     });
   });
-  //get api for user sigin jwt validation
-  app.get('/signin/id/validateToken', (req, res) => {
-    let tokenHeaderKey = process.env.TOKEN_HEADER_KEY;
-    let jwtSecretKey = process.env.JWT_SECRET_KEY;
-    try {
-      const token = req.header(tokenHeaderKey);
+  //compare bycrpted password function
+  
 
-      const verified = jwt.verify(token, jwtSecretKey);
-      if (verified) {
-        con.query('SELECT * FROM user', (err, results) => {
-          if (err) throw err;
-          res.json(results);
-         });
-          return res.send("Successfully Verified");
-      } else {
-          // Access Denied
-          return res.status(401).send(error);
-      }
-     } catch (error) {
-      // Access Denied
-      return res.status(401).send(error);
-     }
-     
+  //get api user to check username and password
+  var passwordcompareresult=''
+  app.get('/signin', (req, res) => {
+    const name = req.body.name;
+    plainpassword = req.body.password;
+    
+    con.query('SELECT name,password  FROM user WHERE name=?',[name] , (err, results) => {
+      var hashedpassword = results[0].password
+            
+      bcrypt.compare(plainpassword, hashedpassword, function(err, result) {
+        if (result) {
+            passwordcompareresult=result
+        }
+    
+      
+      
+      //if (err) throw err;
+      res.json(results);
     });
-//post api for user login and jwt generation
-app.post('/signin/id/generateToken', (req, res) => {
+    console.log(passwordcompareresult)
+    if(passwordcompareresult==true)
+   {
+  //jwt token generation process code below
   let jwtSecretKey = process.env.JWT_SECRET_KEY;
     let data = {
-        time: Date(),
-        userId: 12,
+        name: req.body.name,
+        password:req.body.password,
     }
+    const username = req.body.name;
     const token = jwt.sign(data, jwtSecretKey);
  
-    res.send(token);
-  con.query('INSERT INTO login (usercount,username,password,token) VALUES (?, ?,?,?,?,?)', [usercount,username,dob,passsword,token], (err, results) => {
+    res.send(username,token);
+  con.query('INSERT INTO login (usercount,username,password,token) VALUES (?, ?,?,?,?,?)', [usercount,username,dob,password,token], (err, results) => {
     if (err) throw err;
     res.json(results);
   });
+}
+
+
+
+  });
 });
+  
+//post api for user login and jwt generation
+// app.post('/signin/generateToken', (req, res) => {
+//   //Check User Data Matches with User Table
+  
+        
+
+
 
 //get api for all User List
 app.get('/user', (req, res) => {
