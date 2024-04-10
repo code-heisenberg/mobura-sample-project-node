@@ -88,35 +88,41 @@ con.connect(function(err) {
         if (result) {
             passwordcompareresult=result
         }
-    
+        
       
-      
-      if (err) throw err;
+      if (err)
+      {
+        res.status(400).json({Message:'User DoesNot Exists'})
+      } 
       //res.json(results);
       
     
     console.log(passwordcompareresult)
     if(passwordcompareresult==true)
    {
-  //jwt token generation process code below
-  let jwtSecretKey = process.env.JWT_SECRET_KEY;
-    let data = {
+      //jwt token generation process code below
+      let jwtSecretKey = process.env.JWT_SECRET_KEY;
+      let data = {
         name: req.body.name,
         password:req.body.password,
-    }
-    const username = req.body.name;
-    var jwttokens = jwt.sign(data, jwtSecretKey);
-    var activity = "Active"
-    var date    = Date()
-    //res.send();
-    //res.status(200).send(username,token);
+      }
+      const username = req.body.name;
+      var jwttokens = jwt.sign(data, jwtSecretKey);
+      var activity = "Active"
+      var date    = Date()
+      //res.send();
+      //res.status(200).send(username,token);
 
-  con.query('INSERT INTO login (name,password,jwttoken,activity,date) VALUES (?,?,?,?,?)', [name,password,jwttokens,activity,date], (err, results) => {
-    if (err) throw err;
-    //res.json(name,jwttokens);
-    res.status(200).json({name,jwttokens})
-  });
-}
+        con.query('INSERT INTO login (name,password,jwttoken,activity,date) VALUES (?,?,?,?,?)', [name,password,jwttokens,activity,date], (err, results) => {
+       if (err) throw err;
+       //res.json(name,jwttokens);
+        res.status(200).json({name,jwttokens})
+       });
+   }
+   else
+   {
+    res.status(200).json({Message:'<Seems You Entered A Wrong Passowrd>'})
+   }
 });
 
 
