@@ -15,7 +15,7 @@ var format = require('timestamp-format');
 const { json } = require('body-parser');
 const { connected } = require('process');
 const { PRIORITY_BELOW_NORMAL, R_OK } = require('constants');
-const { count } = require('console');
+const { count, time } = require('console');
 const { callbackify } = require('util');
 const { appendFile } = require('fs');
 const emailValidator = require('deep-email-validator');
@@ -75,9 +75,10 @@ con.connect(function(err) {
   
 
   //get api user to check username and password
-  var passwordcompareresult=''
+  var passwordcompareresult=""
   app.get('/signin', (req, res) => {
-    const name = req.body.name;
+    const { name,password,jwttoken,activity,date } = req.body;
+    //const names = req.body.name;
     plainpassword = req.body.password;
     
     con.query('SELECT name,password  FROM user WHERE name=?',[name] , (err, results) => {
@@ -90,9 +91,10 @@ con.connect(function(err) {
     
       
       
-      //if (err) throw err;
-      res.json(results);
-    });
+      if (err) throw err;
+      //res.json(results);
+      
+    
     console.log(passwordcompareresult)
     if(passwordcompareresult==true)
    {
@@ -103,15 +105,19 @@ con.connect(function(err) {
         password:req.body.password,
     }
     const username = req.body.name;
-    const token = jwt.sign(data, jwtSecretKey);
- 
-    res.send(username,token);
-  con.query('INSERT INTO login (usercount,username,password,token) VALUES (?, ?,?,?,?,?)', [usercount,username,dob,password,token], (err, results) => {
+    var jwttokens = jwt.sign(data, jwtSecretKey);
+    var activity = "Active"
+    var date    = Date()
+    //res.send();
+    //res.status(200).send(username,token);
+
+  con.query('INSERT INTO login (name,password,jwttoken,activity,date) VALUES (?,?,?,?,?)', [name,password,jwttokens,activity,date], (err, results) => {
     if (err) throw err;
-    res.json(results);
+    //res.json(name,jwttokens);
+    res.status(200).json({name,jwttokens})
   });
 }
-
+});
 
 
   });
