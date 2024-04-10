@@ -59,13 +59,7 @@ con.connect(function (err) {
    var emailcount;
    const salt = 10
   var plainpassword;
-  //get api for all product list
-  app.get('/product', (req, res) => {
-    con.query('SELECT * FROM product', (err, results) => {
-      if (err) throw err;
-      res.json(results);
-    });
-  });
+  
    //get api user to check username and password
   var passwordcompareresult = ""
   var individualToken=""
@@ -76,7 +70,7 @@ con.connect(function (err) {
       //console.log(results[0],"<<<->>>"+results[0].toString.length)
       if(results[0]==null)
       {
-        res.status(200).json({ Message: 'Seems You Entered A Wrong Credentials' });
+        res.status(200).json({ Message: 'Seems You Entered Wrong Credentials' });
         return;
       }
       else
@@ -125,10 +119,6 @@ con.connect(function (err) {
   // app.post('/signin/generateToken', (req, res) => {
   //   //Check User Data Matches with User Table
 
-
-
-
-
   //get api for all User List
   app.get('/user', (req, res) => {
     con.query('SELECT * FROM user', (err, results) => {
@@ -137,13 +127,24 @@ con.connect(function (err) {
     });
   });
   //get api for all order list
-  
-  app.get('/orders', (req, res) => {
-    console.log("IndividualToken===>>>>"+individualToken+">>>>->>>>>"+req.body.token);
+    app.get('/orders', (req, res) => {
+    //console.log("IndividualToken===>>>>"+individualToken+">>>>->>>>>"+req.body.token);
     if(req.body.token==individualToken)
     {
       console.log("Token Checking Done SuccessFully");
     con.query('SELECT * FROM orders', (err, results) => {
+      if (err) throw err;
+      res.json(results);
+    });
+  }
+  });
+  //get api for all product list
+  app.get('/product', (req, res) => {
+    console.log("IndividualToken===>>>>"+individualToken+">>>>->>>>>"+req.body.token);
+    if(req.body.token==individualToken)
+    {
+      console.log("Token Checking Done SuccessFully");
+    con.query('SELECT * FROM product', (err, results) => {
       if (err) throw err;
       res.json(results);
     });
@@ -198,16 +199,12 @@ con.connect(function (err) {
           });
 
         })
-
-
         //return res.send({message: "User Details Registered"}
         //);
       }
       if (emailcount > 0) {
         res.send({ message: "Email Already Exits With Us" })
       }
-
-
       if (isvalid == false) {
         return res.status(400).send({
           message: "Please provide a valid email Address"
@@ -219,22 +216,9 @@ con.connect(function (err) {
 
     });
 
-
-
-
-
-
   });
-
   /////////
 });
-
-
-
-
-
-
-
-///Local Server Start Code
+//Local Server Start Code
 app.listen(port);
 
