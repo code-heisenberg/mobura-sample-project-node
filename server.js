@@ -45,24 +45,19 @@ var con = mysql.createConnection({
   database: 'shoppingcartal',
   port: '3306',
   /////////////////////////////
-  
+
 })
-con.connect(function(err) {
-  if (err)
-  {
-   console.log("Error While Connection")
-   return 
+con.connect(function (err) {
+  if (err) {
+    console.log("Error While Connection")
+    return
   }
-  
   console.log("Connected!");
   //EmailValidation Async Function
   const users = [];
-  const press ={};
-  var checkemail;
-  var checkuser;
-  var emailcount;
-  var namecount;
-  const salt =10
+  const press = {};
+   var emailcount;
+   const salt = 10
   var plainpassword;
   //get api for all product list
   app.get('/product', (req, res) => {
@@ -71,171 +66,167 @@ con.connect(function(err) {
       res.json(results);
     });
   });
-  //compare bycrpted password function
-  
-
-  //get api user to check username and password
-  var passwordcompareresult=""
+   //get api user to check username and password
+  var passwordcompareresult = ""
+  var individualToken=""
   app.get('/signin', (req, res) => {
-    const { name,password,jwttoken,activity,date } = req.body;
-    //const names = req.body.name;
+    const { name} = req.body;
     plainpassword = req.body.password;
-    
-    con.query('SELECT name,password  FROM user WHERE name=?',[name] , (err, results) => {
-      var hashedpassword = results[0].password
-            
-      bcrypt.compare(plainpassword, hashedpassword, function(err, result) {
-        if (result) {
-            passwordcompareresult=result
-        }
-        
-      
-      if (err)
+    con.query('SELECT name,password  FROM user WHERE name=?', [name], (err, results) => {
+      //console.log(results[0],"<<<->>>"+results[0].toString.length)
+      if(results[0]==null)
       {
-        res.status(400).json({Message:'User DoesNot Exists'})
-      } 
-      //res.json(results);
-      
-    
-    console.log(passwordcompareresult)
-    if(passwordcompareresult==true)
-   {
-      //jwt token generation process code below
-      let jwtSecretKey = process.env.JWT_SECRET_KEY;
-      let data = {
-        name: req.body.name,
-        password:req.body.password,
+        res.status(200).json({ Message: 'Seems You Entered A Wrong Credentials' });
+        return;
       }
-      const username = req.body.name;
-      var jwttokens = jwt.sign(data, jwtSecretKey);
-      var activity = "Active"
-      var date    = Date()
-      //res.send();
-      //res.status(200).send(username,token);
+      else
+      {
+      var hashedpassword = results[0].password
+      //compare bycrpted password function
+      bcrypt.compare(plainpassword, hashedpassword, function (err, result) {
+        if (result) {
+          passwordcompareresult = result
+        }
+        if (err) {
+          res.status(400).json({ Message: 'User DoesNot Exists' })
+        }
+        //res.json(results);
+        console.log(passwordcompareresult)
+        if (passwordcompareresult == true) {
+          //jwt token generation process code below
+          let jwtSecretKey = process.env.JWT_SECRET_KEY;
+          let data = {
+            name: req.body.name,
+            password: req.body.password,
+          }
+          const username = req.body.name;
+          var jwttokens = jwt.sign(data, jwtSecretKey);
+          var activity = "Active"
+          var date = Date()
+          //res.send();
+          //res.status(200).send(username,token);
+          individualToken=jwttokens
+          con.query('INSERT INTO login (name,jwttoken,activity,date) VALUES (?,?,?,?)', [name, jwttokens, activity, date], (err, results) => {
+            if (err) throw err;
+            //res.json(name,jwttokens);
+            res.status(200).json({ name, jwttokens })
+          });
+        }
+        else {
+          res.status(200).json({ Message: 'Seems You Entered Wrong Credentials' })
+        }
+      });
 
-        con.query('INSERT INTO login (name,password,jwttoken,activity,date) VALUES (?,?,?,?,?)', [name,password,jwttokens,activity,date], (err, results) => {
-       if (err) throw err;
-       //res.json(name,jwttokens);
-        res.status(200).json({name,jwttokens})
-       });
-   }
-   else
-   {
-    res.status(200).json({Message:'<Seems You Entered A Wrong Passowrd>'})
-   }
-});
-
-
+    }
+    });
   });
-});
-  
-//post api for user login and jwt generation
-// app.post('/signin/generateToken', (req, res) => {
-//   //Check User Data Matches with User Table
-  
-        
+
+  //post api for user login and jwt generation
+  // app.post('/signin/generateToken', (req, res) => {
+  //   //Check User Data Matches with User Table
 
 
 
-//get api for all User List
-app.get('/user', (req, res) => {
-  con.query('SELECT * FROM user', (err, results) => {
-    if (err) throw err;
-    res.json(results);
-  });
-});
-  //get api for all order list
-  app.get('/orders', (req, res) => {
-    con.query('SELECT * FROM orders', (err, results) => {
+
+
+  //get api for all User List
+  app.get('/user', (req, res) => {
+    con.query('SELECT * FROM user', (err, results) => {
       if (err) throw err;
       res.json(results);
     });
   });
-  //User SingUp
-   app.post('/signup',  (req, res, next)=>  {
-    const { user_id,email,name,dob,address,password } = req.body;
-     const emailid = req.body.email; 
-     
-    if(!emailid)
+  //get api for all order list
+  
+  app.get('/orders', (req, res) => {
+    console.log("IndividualToken===>>>>"+individualToken+">>>>->>>>>"+req.body.token);
+    if(req.body.token==individualToken)
     {
+      console.log("Token Checking Done SuccessFully");
+    con.query('SELECT * FROM orders', (err, results) => {
+      if (err) throw err;
+      res.json(results);
+    });
+  }
+  });
+  //User SingUp
+  app.post('/signup', (req, res, next) => {
+    const { user_id, email, name, dob, address, password } = req.body;
+    console.log(req.body)
+    const emailid = req.body.email;
+
+    if (!emailid) {
       return res.status(400).send({
         message: "Email  Missing."
       })
     }
-    if(!name)
-    {
+    if (!name) {
       return res.status(400).send({
         message: "Name Missing"
       })
     }
-    if(!dob)
-    {
+    if (!dob) {
       return res.status(400).send({
         message: "Date Of Birth Missing"
       })
     }
-    if(!address)
-    {
+    if (!address) {
       return res.status(400).send({
         message: "Address Missing"
       })
     }
-     //Email validation inbuilt Function validator
-     isvalid = validator.validate(emailid);
-     //Code Below to check Email Already Exits or Not
-     con.query('SELECT COUNT(*) AS count FROM user WHERE email=?',[emailid], (err, results) => {
+    //Email validation inbuilt Function validator
+    isvalid = validator.validate(emailid);
+    //Code Below to check Email Already Exits or Not
+    con.query('SELECT COUNT(*) AS count FROM user WHERE email=?', [emailid], (err, results) => {
       if (err) throw err;
-      
+
       emailcount = results[0].count;
-      
-      console.log("Count=>"+emailcount)
+
+      console.log("Count=>" + emailcount)
       //Code Below to insert New Emailid based User
-      if (isvalid && emailcount==0)
-      {
-       var bycryptpassword = req.body.password
-       bcrypt.hash(bycryptpassword.toString(),salt,(err,hash)=>{
-        if(err)
-        {
-          console.log(err);
-        }
-        var bycrypted = hash;
-        con.query('INSERT INTO user (user_id,email,name,dob,address,password) VALUES (?, ?,?,?,?,?)', [user_id,email,name,dob,address,bycrypted], (err, result) => {
-          if (err) throw err;
-          res.json({ message: 'User added successfully' });
-        });
+      if (isvalid && emailcount == 0) {
+        var bycryptpassword = req.body.password
+        bcrypt.hash(bycryptpassword.toString(), salt, (err, hash) => {
+          if (err) {
+            console.log(err);
+          }
+          var bycrypted = hash;
+          con.query('INSERT INTO user (user_id,email,name,dob,address,password) VALUES (?, ?,?,?,?,?)', [user_id, email, name, dob, address, bycrypted], (err, result) => {
+            if (err) throw err;
+            res.json({ message: 'User added successfully' });
+          });
 
-       }) 
-       
-       
-       //return res.send({message: "User Details Registered"}
-       //);
-     }
-     if(emailcount>0)
-      {
-       res.send({message: "Email Already Exits With Us"})
+        })
+
+
+        //return res.send({message: "User Details Registered"}
+        //);
       }
- 
- 
-     if(isvalid==false)
-     {
-     return res.status(400).send({
-       message: "Please provide a valid email Address"
-       
-     })
- 
-   }
-           
-      
+      if (emailcount > 0) {
+        res.send({ message: "Email Already Exits With Us" })
+      }
+
+
+      if (isvalid == false) {
+        return res.status(400).send({
+          message: "Please provide a valid email Address"
+
+        })
+
+      }
+
+
     });
-    
-              
 
-    
 
-    
+
+
+
+
   });
-  
-/////////
+
+  /////////
 });
 
 
