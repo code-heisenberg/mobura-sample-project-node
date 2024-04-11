@@ -71,7 +71,7 @@ con.connect(function (err) {
         res.status(200).json({ Message: 'Seems You Entered Wrong Credentials' });
         return;
       }
-      else
+      else if(results[0].toString().length>1)
       {
       var hashedPassword = results[0].password
       //compare bycrpted password function
@@ -134,10 +134,11 @@ con.connect(function (err) {
 //post order api for order placing
 app.post('/orders', (req, res) => {
   //console.log("IndividualToken===>>>>"+individualToken+">>>>->>>>>"+req.body.token);
+  var orderUserName=req.body.name;
   if(req.body.token==individualToken)
   {
     console.log("Token Checking Done SuccessFully");
-    con.query('INSERT INTO order(user_id,email,name,dob,address,password) VALUES (?, ?,?,?,?,?)', [user_id, email, name, dob, address, bycrypted], (err, result) => {
+    con.query('INSERT INTO order(user_id,email,name,dob,address,password) VALUES (?, ?,?,?,?,?)', [user_id, email, orderUserName, dob, address, bycrypted], (err, result) => {
       if (err) throw err;
       res.json({ message: 'User added successfully' });
     });
