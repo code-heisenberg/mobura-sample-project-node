@@ -2,7 +2,6 @@ const http = require('http');
 //const router = require('./router/routes')
 const port = process.env.port || 3000;
 //const server = http.createServer(router);
-////
 const express = require('express');
 const dotenv = require('dotenv');
 var mysql = require('mysql');
@@ -24,13 +23,13 @@ const app = express();
 dotenv.config()
 //Db Connection Code Below
 //app.use(express.static('public'));
-//app.use(bodyparser.urlencoded({ extended: true }));
-//app.use(bodyparser.json());
-/*app.use(function (req, res, next) {
+app.use(bodyparser.urlencoded({ extended: true }));
+app.use(bodyparser.json());
+app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
-});*/
+});
 
 //SERVER LISTENING-PORT 
 var APP_PORT = '3000'
@@ -56,16 +55,15 @@ con.connect(function (err) {
   //EmailValidation Async Function
   const users = [];
   const press = {};
-   var emailcount;
-   const salt = 10
-  var plainpassword;
-  
+  var emailCount;
+  const salt = 10
+  var plainPassword;
    //get api user to check username and password
-  var passwordcompareresult = ""
+  var passwordCompareResult = ""
   var individualToken=""
   app.get('/signin', (req, res) => {
     const { name} = req.body;
-    plainpassword = req.body.password;
+    plainPassword = req.body.password;
     con.query('SELECT name,password  FROM user WHERE name=?', [name], (err, results) => {
       //console.log(results[0],"<<<->>>"+results[0].toString.length)
       if(results[0]==null)
@@ -75,35 +73,35 @@ con.connect(function (err) {
       }
       else
       {
-      var hashedpassword = results[0].password
+      var hashedPassword = results[0].password
       //compare bycrpted password function
-      bcrypt.compare(plainpassword, hashedpassword, function (err, result) {
+      bcrypt.compare(plainPassword, hashedPassword, function (err, result) {
         if (result) {
-          passwordcompareresult = result
+          passwordCompareResult = result
         }
         if (err) {
           res.status(400).json({ Message: 'User DoesNot Exists' })
         }
         //res.json(results);
-        console.log(passwordcompareresult)
-        if (passwordcompareresult == true) {
+        console.log(passwordCompareResult)
+        if (passwordCompareResult == true) {
           //jwt token generation process code below
           let jwtSecretKey = process.env.JWT_SECRET_KEY;
           let data = {
             name: req.body.name,
             password: req.body.password,
           }
-          const username = req.body.name;
-          var jwttokens = jwt.sign(data, jwtSecretKey);
+          //const username = req.body.name;
+          var jwtTokens = jwt.sign(data, jwtSecretKey);
           var activity = "Active"
           var date = Date()
           //res.send();
           //res.status(200).send(username,token);
-          individualToken=jwttokens
-          con.query('INSERT INTO login (name,jwttoken,activity,date) VALUES (?,?,?,?)', [name, jwttokens, activity, date], (err, results) => {
+          individualToken=jwtTokens
+          con.query('INSERT INTO login (name,jwttoken,activity,date) VALUES (?,?,?,?)', [name, jwtTokens, activity, date], (err, results) => {
             if (err) throw err;
-            //res.json(name,jwttokens);
-            res.status(200).json({ name, jwttokens })
+            //res.json(name,jwtTokens);
+            res.status(200).json({ name, jwtTokens })
           });
         }
         else {
@@ -127,12 +125,25 @@ con.connect(function (err) {
     if(req.body.token==individualToken)
     {
       console.log("Token Checking Done SuccessFully");
-    con.query('SELECT * FROM orders', (err, results) => {
+      con.query('SELECT * FROM orders', (err, results) => {
       if (err) throw err;
       res.json(results);
     });
   }
   });
+//post order api for order placing
+app.post('/orders', (req, res) => {
+  //console.log("IndividualToken===>>>>"+individualToken+">>>>->>>>>"+req.body.token);
+  if(req.body.token==individualToken)
+  {
+    console.log("Token Checking Done SuccessFully");
+    con.query('INSERT INTO order(user_id,email,name,dob,address,password) VALUES (?, ?,?,?,?,?)', [user_id, email, name, dob, address, bycrypted], (err, result) => {
+      if (err) throw err;
+      res.json({ message: 'User added successfully' });
+    });
+    
+}
+});
   //get api for all product list
   app.get('/product', (req, res) => {
     console.log("IndividualToken===>>>>"+individualToken+">>>>->>>>>"+req.body.token);
@@ -176,14 +187,12 @@ con.connect(function (err) {
     //Code Below to check Email Already Exits or Not
     con.query('SELECT COUNT(*) AS count FROM user WHERE email=?', [emailid], (err, results) => {
       if (err) throw err;
-
-      emailcount = results[0].count;
-
-      console.log("Count=>" + emailcount)
+      emailCount = results[0].count;
+      console.log("Count=>" + emailCount)
       //Code Below to insert New Emailid based User
-      if (isvalid && emailcount == 0) {
-        var bycryptpassword = req.body.password
-        bcrypt.hash(bycryptpassword.toString(), salt, (err, hash) => {
+      if (isvalid && emailCount == 0) {
+        var bycryptPassword = req.body.password
+        bcrypt.hash(bycryptPassword.toString(), salt, (err, hash) => {
           if (err) {
             console.log(err);
           }
@@ -194,10 +203,9 @@ con.connect(function (err) {
           });
 
         })
-        //return res.send({message: "User Details Registered"}
-        //);
+        
       }
-      if (emailcount > 0) {
+      if (emailCount > 0) {
         res.send({ message: "Email Already Exits With Us" })
       }
       if (isvalid == false) {
