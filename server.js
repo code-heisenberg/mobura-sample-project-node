@@ -170,9 +170,20 @@ app.get('/orderId', (req, res) => {
       if (err) throw err;
       res.json(results);
     });
-    
-    
+        
 }
+});
+//Api For Billing+Shipping of a User
+app.get('/shipBill', (req, res) => {
+  var userId=req.body.user_id;
+  if(req.body.token==individualToken)
+  {
+      console.log("Token Checking Done SuccessFully");
+      con.query('SELECT billing_address,shipping_address  FROM orders WHERE user_id=?', [userId], (err, results) => {
+      if (err) throw err;
+      res.json(results);
+    });
+  }
 });
 //post useer forgot password for order placing
 app.post('/forgotPassword', (req, res) => {
@@ -218,7 +229,6 @@ app.post('/passwordReset', (req, res) => {
   })
  }
 })
-
 //post product api for order placing
 app.post('/product', (req, res) => {
   var { product_id,product_name,image,product_price,product_quantity,category_id,date } = req.body;
