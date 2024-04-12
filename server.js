@@ -174,6 +174,51 @@ app.get('/orderId', (req, res) => {
     
 }
 });
+//post useer forgot password for order placing
+app.post('/forgotPassword', (req, res) => {
+  var { name,password } = req.body;
+ 
+ if(req.body.token==individualToken)
+ {
+   console.log("Token Checking Done SuccessFully");
+   var bycryptForgotPassword = req.body.password
+        bcrypt.hash(bycryptForgotPassword.toString(), salt, (err, hash) => {
+          if (err) {
+            console.log(err);
+          }
+          var forgotPasswordHash =hash;
+          console.log(forgotPasswordHash);
+   con.query("UPDATE user SET password=? WHERE name=?" ,[forgotPasswordHash,name], (err, result) => {
+     if (err) throw err;
+     res.json({ message: 'Password Updated Successfully For UserNAme=>'+name });
+  
+   })
+  })
+ }
+})
+//post useer forgot password for order placing
+app.post('/passwordReset', (req, res) => {
+  var { name,password } = req.body;
+ 
+ if(req.body.token==individualToken)
+ {
+   console.log("Token Checking Done SuccessFully");
+   var bycryptForgotPassword = req.body.password
+        bcrypt.hash(bycryptForgotPassword.toString(), salt, (err, hash) => {
+          if (err) {
+            console.log(err);
+          }
+          var forgotPasswordHash =hash;
+          console.log(forgotPasswordHash);
+   con.query("UPDATE user SET password=? WHERE name=?" ,[forgotPasswordHash,name], (err, result) => {
+     if (err) throw err;
+     res.json({ message: 'Password Updated Successfully For UserNAme=>'+name });
+  
+   })
+  })
+ }
+})
+
 //post product api for order placing
 app.post('/product', (req, res) => {
   var { product_id,product_name,image,product_price,product_quantity,category_id,date } = req.body;
