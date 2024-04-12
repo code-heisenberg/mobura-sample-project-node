@@ -19,6 +19,7 @@ const { callbackify } = require('util');
 const { appendFile } = require('fs');
 const emailValidator = require('deep-email-validator');
 const validator = require('email-validator');
+const uuid = require('uuid');
 const app = express();
 dotenv.config()
 //Db Connection Code Below
@@ -57,14 +58,17 @@ con.connect(function (err) {
   const press = {};
   var emailCount;
   const salt = 10
-  var plainPassword;
+  var plainPassword="";
+  var userId=""
+  var date=""
    //get api user to check username and password
   var passwordCompareResult = ""
   var individualToken=""
   app.get('/signin', (req, res) => {
     const { name} = req.body;
     plainPassword = req.body.password;
-    con.query('SELECT name,password  FROM user WHERE name=?', [name], (err, results) => {
+
+    con.query('SELECT user_id,name,password  FROM user WHERE name=?', [name], (err, results) => {
       //console.log(results[0],"<<<->>>"+results[0].toString.length)
       if(results[0]==null)
       {
@@ -74,6 +78,7 @@ con.connect(function (err) {
       else if(results[0].toString().length>1)
       {
       var hashedPassword = results[0].password
+      userId = results[0].user_id;
       //compare bycrpted password function
       bcrypt.compare(plainPassword, hashedPassword, function (err, result) {
         if (result) {
@@ -92,16 +97,17 @@ con.connect(function (err) {
             password: req.body.password,
           }
           //const username = req.body.name;
-          var jwtTokens = jwt.sign(data, jwtSecretKey);
+          var token = jwt.sign(data, jwtSecretKey);
           var activity = "Active"
-          var date = Date()
+          date = Date()
           //res.send();
           //res.status(200).send(username,token);
-          individualToken=jwtTokens
-          con.query('INSERT INTO login (name,jwttoken,activity,date) VALUES (?,?,?,?)', [name, jwtTokens, activity, date], (err, results) => {
+          individualToken=token
+
+          con.query('INSERT INTO login (user_id,name,token,activity,date) VALUES (?,?,?,?,?)', [userId,name, token, activity, date], (err, results) => {
             if (err) throw err;
             //res.json(name,jwtTokens);
-            res.status(200).json({ name, jwtTokens })
+            res.status(200).json({userId,name, token })
           });
         }
         else {
@@ -131,20 +137,66 @@ con.connect(function (err) {
     });
   }
   });
-//post order api for order placing
-app.post('/orders', (req, res) => {
-  //console.log("IndividualToken===>>>>"+individualToken+">>>>->>>>>"+req.body.token);
-  var orderUserName=req.body.name;
+ //post order api for order placing
+ app.post('/orders', (req, res) => {
+   const { order_id,user_id,product_id,payment_option,billing_address,email,mobile,date,shipping_address } = req.body;
+   const uniqueId = uuid.v4();
+  console.log("UniqueId->"+uniqueId);
+  if(!user_id==false && !product_id==false && !payment_option==false && !billing_address==false && !email==false && !mobile==false && !date==false && !shipping_address==false)
+  {
   if(req.body.token==individualToken)
   {
     console.log("Token Checking Done SuccessFully");
-    con.query('INSERT INTO order(user_id,email,name,dob,address,password) VALUES (?, ?,?,?,?,?)', [user_id, email, orderUserName, dob, address, bycrypted], (err, result) => {
+    con.query('INSERT INTO orders(order_id,user_id,product_id,payment_option,billing_address,email,mobile,date,shipping_address) VALUES (?,?,?,?,?,?,?,?,?)', [uniqueId,user_id,product_id,payment_option,billing_address,email,mobile,date,shipping_address], (err, result) => {
       if (err) throw err;
-      res.json({ message: 'User added successfully' });
+      res.json({ message: 'Order Submitted Successfully' });
     });
+    
+   }
+  }
+  else if(!user_id==true && !product_id==true && !payment_option==true && !billing_address==true && !email==true && !mobile==true && !date==true && !shipping_address==true)
+  {
+  res.status(400).send({Message:'Please Fill ALl Fields For Order Submission'})
+  }
+});
+//API FOR ORDER-ID BASED SEARCH
+app.get('/orderId', (req, res) => {
+  //console.log("IndividualToken===>>>>"+individualToken+">>>>->>>>>"+req.body.token);
+  var orderId=req.body.order_id
+  if(req.body.token==individualToken)
+  {
+      console.log("Token Checking Done SuccessFully");
+      con.query('SELECT order_id,user_id,product_id,payment_option,billing_address,email,mobile,date,shipping_address  FROM orders WHERE order_id=?', [orderId], (err, results) => {
+      if (err) throw err;
+      res.json(results);
+    });
+    
     
 }
 });
+//post product api for order placing
+app.post('/product', (req, res) => {
+  var { product_id,product_name,image,product_price,product_quantity,category_id,date } = req.body;
+  var category_ids = uuid.v4();
+ console.log("UniqueId->"+category_ids);
+ 
+if(!product_id==false && !product_name==false && !product_price==false && !product_quantity==false && !category_id==false && !date==false)
+{
+ if(req.body.token==individualToken)
+ {
+   console.log("Token Checking Done SuccessFully");
+   con.query('INSERT INTO product(product_id,product_name,image,product_price,product_quantity,category_id,date) VALUES (?,?,?,?,?,?,?)', [product_id,product_name,image,product_price,product_quantity,category_id,date], (err, result) => {
+     if (err) throw err;
+     res.json({ message: 'Product Submitted Successfully' });
+  
+   })
+
+    }
+ 
+ }
+else if(!product_id==true || !product_name==true || !product_price==true || !product_quantity==true || !category_id==true || !date==true)
+  res.status(400).send({Message:'Please Fill ALl Fields For Order Submission'})
+})
   //get api for all product list
   app.get('/product', (req, res) => {
     console.log("IndividualToken===>>>>"+individualToken+">>>>->>>>>"+req.body.token);
@@ -156,16 +208,32 @@ app.post('/orders', (req, res) => {
       res.json(results);
     });
   }
+
   });
+  //API FOR product-ID BASED SEARCH
+app.get('/productId', (req, res) => {
+  //console.log("IndividualToken===>>>>"+individualToken+">>>>->>>>>"+req.body.token);
+  var productId=req.body.product_id
+  if(req.body.token==individualToken)
+  {
+      console.log("Token Checking Done SuccessFully");
+      con.query('SELECT product_id,product_name,image,product_price,product_quantity,category_id  FROM product WHERE product_id=?', [productId], (err, results) => {
+      if (err) throw err;
+      res.json(results);
+    });
+    
+    
+}
+});
   //User SingUp
   app.post('/signup', (req, res, next) => {
-    const { user_id, email, name, dob, address, password } = req.body;
+    const { user_id, email, name, dob, address, password,mobile } = req.body;
     console.log(req.body)
-    const emailid = req.body.email;
+    const emailId = req.body.email;
 
-    if (!emailid) {
+    if (!emailId) {
       return res.status(400).send({
-        message: "Email  Missing."
+        message: "Email  Missing"
       })
     }
     if (!name) {
@@ -183,14 +251,25 @@ app.post('/orders', (req, res) => {
         message: "Address Missing"
       })
     }
+    if (!password) {
+      return res.status(400).send({
+        message: "Please Enter Password of Your Choice"
+      })
+    }
+    if (!mobile) {
+      return res.status(400).send({
+        message: "Please Enter [A] Valid Mobile->Number"
+      })
+    }
     //Email validation inbuilt Function validator
-    isvalid = validator.validate(emailid);
+    isvalid = validator.validate(emailId);
     //Code Below to check Email Already Exits or Not
-    con.query('SELECT COUNT(*) AS count FROM user WHERE email=?', [emailid], (err, results) => {
+    con.query('SELECT COUNT(*) AS count FROM user WHERE email=?', [emailId], (err, results) => {
       if (err) throw err;
+
       emailCount = results[0].count;
       console.log("Count=>" + emailCount)
-      //Code Below to insert New Emailid based User
+      //Code Below to insert New user based on emailId
       if (isvalid && emailCount == 0) {
         var bycryptPassword = req.body.password
         bcrypt.hash(bycryptPassword.toString(), salt, (err, hash) => {
@@ -198,7 +277,7 @@ app.post('/orders', (req, res) => {
             console.log(err);
           }
           var bycrypted = hash;
-          con.query('INSERT INTO user (user_id,email,name,dob,address,password) VALUES (?, ?,?,?,?,?)', [user_id, email, name, dob, address, bycrypted], (err, result) => {
+          con.query('INSERT INTO user (user_id,email,name,dob,address,password,mobile) VALUES (?, ?,?,?,?,?)', [user_id, email, name, dob, address, bycrypted,mobile], (err, result) => {
             if (err) throw err;
             res.json({ message: 'User added successfully' });
           });
@@ -211,8 +290,7 @@ app.post('/orders', (req, res) => {
       }
       if (isvalid == false) {
         return res.status(400).send({
-          message: "Please provide a valid email Address"
-
+          message: "Please Provide [A] Valid Email Address"
         })
       }
     });
