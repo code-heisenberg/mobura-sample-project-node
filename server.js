@@ -21,6 +21,8 @@ const emailValidator = require('deep-email-validator');
 const validator = require('email-validator');
 const uuid = require('uuid');
 const app = express();
+const sentEmailToken =require('./email/sentEmailToken.js');
+//const { sendEmail } = require('./email/sentEmailToken.js');
 dotenv.config()
 //Db Connection Code Below
 //app.use(express.static('public'));
@@ -67,7 +69,6 @@ con.connect(function (err) {
   app.get('/signin', (req, res) => {
     const { name} = req.body;
     plainPassword = req.body.password;
-
     con.query('SELECT user_id,name,password  FROM user WHERE name=?', [name], (err, results) => {
       //console.log(results[0],"<<<->>>"+results[0].toString.length)
       if(results[0]==null)
@@ -103,7 +104,7 @@ con.connect(function (err) {
           //res.send();
           //res.status(200).send(username,token);
           individualToken=token
-
+          //sentEmailToken.sendEmail('princetech1@gmail.com','prince19');
           con.query('INSERT INTO login (user_id,name,token,activity,date) VALUES (?,?,?,?,?)', [userId,name, token, activity, date], (err, results) => {
             if (err) throw err;
             //res.json(name,jwtTokens);
@@ -159,6 +160,37 @@ con.connect(function (err) {
   res.status(400).send({Message:'Please Fill ALl Fields For Order Submission'})
   }
 });
+//API FOR cart data per UserId 
+app.get('/userCart', (req, res) => {
+  var userId=req.body.user_id
+  if(req.body.token==individualToken)
+  {
+      console.log("Token Checking Done SuccessFully");
+      //con.query('SELECT user_id,product_id,quantity,date,SUM(total_amount) WHERE user_id=?',[userId], (err, results) => {
+      con.query('SELECT * FROM cart' , (err, results) => {
+      if (err) throw err;
+      res.json(results);
+    });
+        
+}
+});
+//post Cartal api for Virtual Prodct Storing
+app.post('/cart', (req, res) => {
+  const { cart_id,user_id,product_id,quantity,total_amount } = req.body;
+  const cartId = uuid.v4();
+ //console.log("UniqueId->"+uniqueId);
+ 
+ if(req.body.token==individualToken)
+ {
+   console.log("Token Checking Done SuccessFully");
+   con.query('INSERT INTO cart(cart_id,user_id,product_id,quantity,total_amount,date) VALUES (?,?,?,?,?,?)', [cartId,user_id,product_id,quantity,total_amount,date], (err, result) => {
+     if (err) throw err;
+     res.json({ message: 'Cart-Order Submitted Successfully' });
+   });
+   
+  }
+ 
+});
 //API FOR ORDER-ID BASED SEARCH
 app.get('/orderId', (req, res) => {
   //console.log("IndividualToken===>>>>"+individualToken+">>>>->>>>>"+req.body.token);
@@ -201,7 +233,7 @@ app.post('/forgotPassword', (req, res) => {
           console.log(forgotPasswordHash);
    con.query("UPDATE user SET password=? WHERE name=?" ,[forgotPasswordHash,name], (err, result) => {
      if (err) throw err;
-     res.json({ message: 'Password Updated Successfully For UserNAme=>'+name });
+     res.json({ message: 'Password Updated Successfully For UserName=>'+name });
   
    })
   })
@@ -283,18 +315,24 @@ app.get('/productId', (req, res) => {
   //User SingUp
   app.post('/signup', (req, res, next) => {
     const { user_id, email, name, dob, address, password,mobile } = req.body;
-    console.log(req.body)
+    //console.log(req.body)
     const emailId = req.body.email;
-
+    let message;
     if (!emailId) {
       return res.status(400).send({
         message: "Email  Missing"
       })
     }
-    if (!name) {
-      return res.status(400).send({
-        message: "Name Missing"
+    if (!emailId==false) {
+      
+      return res.status(200).send({
+        message: "Please Verify Your Email"
+        
       })
+    }
+    
+    if (name.length==0) {
+      message="name is Missing"
     }
     if (!dob) {
       return res.status(400).send({
