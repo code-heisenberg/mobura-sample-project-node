@@ -66,6 +66,8 @@ con.connect(function (err) {
    //get api user to check username and password
   var passwordCompareResult = ""
   var individualToken=""
+   productQuery=[]
+   cartQuery=[]
   app.get('/signin', (req, res) => {
     const { name} = req.body;
     plainPassword = req.body.password;
@@ -161,29 +163,59 @@ con.connect(function (err) {
   }
 });
 //API FOR cart data per UserId 
+var Total_Amount=0
 app.get('/userCart', (req, res) => {
   var userId=req.body.user_id
   if(req.body.token==individualToken)
   {
       console.log("Token Checking Done SuccessFully");
-      //con.query('SELECT user_id,product_id,quantity,date,SUM(total_amount) WHERE user_id=?',[userId], (err, results) => {
-      con.query('SELECT * FROM cart' , (err, results) => {
+      
+      var sqlQuery2=' SELECT p.product_id,p.product_name,c.quantity,c.price,SUM(c.quantity*c.price) AS Total_Price FROM product p INNER JOIN cart c ON p.product_id = c.product_id WHERE c.user_id=? GROUP BY p.product_id ';
+      //var sqlQuery2='SELECT c.product_id,p.product_name,c.quantity,p.image,p.product_price,SUM(c.quantity*c.price) FROM product p INNER JOIN cart c ON p.product_id = c.product_id  WHERE user_id=?';
+      ////////////////////////////////////////////////
+      //below code will fetch all records of a userid
+      ///////////////////////////////////////////////
+      //var sqlQuery2='SELECT c.*,p.*,SUM(c.quantity*c.price) AS Total_Amount FROM product p INNER JOIN cart c ON p.product_id = c.product_id WHERE c.user_id=?';
+      
+      con.query(sqlQuery2,[userId], (err, results) => {
+        //cartQuery = results[0];
       if (err) throw err;
-      res.json(results);
+      //res.json(results);
+      results.forEach(row=>{
+        const jsonData =JSON.stringify(row);
+        console.log("row=>"+jsonData);
+        const parsedData=JSON.parse(jsonData);
+        Total_Amount+=parsedData.Total_Price
+        console.log(Total_Amount);
+        
+      })
+      const response =
+      {
+        results:results,
+        Total_Amount: Total_Amount
+      }
+      res.json(response);
     });
+    //var sqlQuery1="SELECTproduct_id,quantity,SUM(total_amount)) FROM cart WHERE user_id=?"
+        //   con.query(sqlQuery2,[userId], (err, results) => {
+    //     cartQuery =results;
+    //   if (err) throw err;
+    //   var joinQuery=productQuery+cartQuery
+    //   res.json(joinQuery.toString());
+    // });
         
 }
 });
 //post Cartal api for Virtual Prodct Storing
 app.post('/cart', (req, res) => {
-  const { cart_id,user_id,product_id,quantity,total_amount } = req.body;
+  const { cart_id,user_id,product_id,quantity,price } = req.body;
   const cartId = uuid.v4();
  //console.log("UniqueId->"+uniqueId);
  
  if(req.body.token==individualToken)
  {
    console.log("Token Checking Done SuccessFully");
-   con.query('INSERT INTO cart(cart_id,user_id,product_id,quantity,total_amount,date) VALUES (?,?,?,?,?,?)', [cartId,user_id,product_id,quantity,total_amount,date], (err, result) => {
+   con.query('INSERT INTO cart(cart_id,user_id,product_id,quantity,price,date) VALUES (?,?,?,?,?,?)', [cartId,user_id,product_id,quantity,price,date], (err, result) => {
      if (err) throw err;
      res.json({ message: 'Cart-Order Submitted Successfully' });
    });
@@ -318,6 +350,7 @@ app.get('/productId', (req, res) => {
     //console.log(req.body)
     const emailId = req.body.email;
     let message;
+
     if (!emailId) {
       return res.status(400).send({
         message: "Email  Missing"
