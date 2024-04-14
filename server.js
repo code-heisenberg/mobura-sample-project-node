@@ -63,11 +63,13 @@ con.connect(function (err) {
   var plainPassword="";
   var userId=""
   var date=""
-   //get api user to check username and password
   var passwordCompareResult = ""
   var individualToken=""
+  var emailId=""
+  //var emailVerificationResponse=""
    productQuery=[]
    cartQuery=[]
+
   app.get('/signin', (req, res) => {
     const { name} = req.body;
     plainPassword = req.body.password;
@@ -117,7 +119,7 @@ con.connect(function (err) {
           res.status(200).json({ Message: 'Seems You Entered Wrong Credentials' })
         }
       });
-
+    
     }
     });
   });
@@ -183,15 +185,15 @@ app.get('/userCart', (req, res) => {
       //res.json(results);
       results.forEach(row=>{
         const jsonData =JSON.stringify(row);
-        console.log("row=>"+jsonData);
+        //console.log("row=>"+jsonData);
         const parsedData=JSON.parse(jsonData);
         Total_Amount+=parsedData.Total_Price
-        console.log(Total_Amount);
+        //console.log(Total_Amount);
         
       })
       const response =
       {
-        results:results,
+        Products:results,
         Total_Amount: Total_Amount
       }
       res.json(response);
@@ -203,7 +205,7 @@ app.get('/userCart', (req, res) => {
     //   var joinQuery=productQuery+cartQuery
     //   res.json(joinQuery.toString());
     // });
-        
+  
 }
 });
 //post Cartal api for Virtual Prodct Storing
@@ -249,13 +251,33 @@ app.get('/shipBill', (req, res) => {
     });
   }
 });
-//post useer forgot password for order placing
+//post useer forgot password
 app.post('/forgotPassword', (req, res) => {
   var { name,password } = req.body;
+ emailId=req.body.email;
  
- if(req.body.token==individualToken)
- {
-   console.log("Token Checking Done SuccessFully");
+ isvalid = validator.validate(emailId);
+ if (isvalid == false) {
+  return res.status(400).send({
+    message: "Please Provide [A] Valid Email Address"
+  })
+
+}
+con.query('SELECT COUNT(*) AS count FROM user WHERE email=?', [emailId], (err, results) => {
+  if (err) throw err;
+
+  emailCount = results[0].count;
+  console.log("ForgotPasswordAreaEmailCount=>" + emailCount)
+  //Code Below to insert New user based on emailId
+  if (isvalid && emailCount == 1) {
+    //Code Below To Check Email-Verification
+    sentEmailToken.sendEmail('johnadam7x@gmail.com','0007');
+    
+  }
+  var emailVerificationResponse=sentEmailToken.sendEmail.emailVerificationResponse;
+        
+   if(sentEmailToken.sendEmail.emailVerificationResponse=="Verified")
+   {console.log(emailVerificationResponse); 
    var bycryptForgotPassword = req.body.password
         bcrypt.hash(bycryptForgotPassword.toString(), salt, (err, hash) => {
           if (err) {
@@ -266,11 +288,14 @@ app.post('/forgotPassword', (req, res) => {
    con.query("UPDATE user SET password=? WHERE name=?" ,[forgotPasswordHash,name], (err, result) => {
      if (err) throw err;
      res.json({ message: 'Password Updated Successfully For UserName=>'+name });
-  
+   
    })
+                
   })
- }
+   }
 })
+})
+
 //post useer forgot password for order placing
 app.post('/passwordReset', (req, res) => {
   var { name,password } = req.body;
@@ -348,7 +373,8 @@ app.get('/productId', (req, res) => {
   app.post('/signup', (req, res, next) => {
     const { user_id, email, name, dob, address, password,mobile } = req.body;
     //console.log(req.body)
-    const emailId = req.body.email;
+    emailId = req.body.email;
+    //emailVerificationResponse=req.body.emailVerificationResponse;
     let message;
 
     if (!emailId) {
@@ -356,13 +382,7 @@ app.get('/productId', (req, res) => {
         message: "Email  Missing"
       })
     }
-    if (!emailId==false) {
-      
-      return res.status(200).send({
-        message: "Please Verify Your Email"
-        
-      })
-    }
+     
     
     if (name.length==0) {
       message="name is Missing"
@@ -387,6 +407,7 @@ app.get('/productId', (req, res) => {
         message: "Please Enter [A] Valid Mobile->Number"
       })
     }
+    
     //Email validation inbuilt Function validator
     isvalid = validator.validate(emailId);
     //Code Below to check Email Already Exits or Not
@@ -394,9 +415,20 @@ app.get('/productId', (req, res) => {
       if (err) throw err;
 
       emailCount = results[0].count;
-      console.log("Count=>" + emailCount)
+      //console.log("Count=>" + emailCount)
       //Code Below to insert New user based on emailId
       if (isvalid && emailCount == 0) {
+        //Code Below To Check Email-Verification
+       var emailVerificationResponse=sentEmailToken.sendEmail.emailVerificationResponse;
+        console.log(emailVerificationResponse); 
+    if (emailCount == 0 && sentEmailToken.sendEmail.emailVerificationResponse!="Verified") {
+      
+      return res.status(200).send({
+        message: "Please Verify Your Email By Click The Link Send To Your=>"+ emailId
+        
+      })
+    }
+    if (emailCount == 0 && emailVerificationResponse=="Verified") {
         var bycryptPassword = req.body.password
         bcrypt.hash(bycryptPassword.toString(), salt, (err, hash) => {
           if (err) {
@@ -405,12 +437,14 @@ app.get('/productId', (req, res) => {
           var bycrypted = hash;
           con.query('INSERT INTO user (user_id,email,name,dob,address,password,mobile) VALUES (?, ?,?,?,?,?)', [user_id, email, name, dob, address, bycrypted,mobile], (err, result) => {
             if (err) throw err;
-            res.json({ message: 'User added successfully' });
+            res.json({ message: 'User Added Successfully=>Thanks For SignUp' });
           });
 
         })
+      
         
       }
+    }
       if (emailCount > 0) {
         res.send({ message: "Email Already Exits With Us" })
       }
@@ -419,9 +453,11 @@ app.get('/productId', (req, res) => {
           message: "Please Provide [A] Valid Email Address"
         })
       }
+    
     });
   });
   });
+
 //Local Server Start Code Below
 app.listen(port);
 
