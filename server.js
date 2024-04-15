@@ -1,10 +1,15 @@
 const http = require('http');
+const url = require('url');
+///////////////////////////////////////////////////////
+const expressLayouts = require('express-ejs-layouts');
+///////////////////////////////////////////////////////
 //const router = require('./router/routes')
 const port = process.env.port || 3000;
 //const server = http.createServer(router);
 const express = require('express');
 const dotenv = require('dotenv');
 var mysql = require('mysql');
+
 var bodyparser = require('body-parser');
 var moment = require('moment');
 const cors = require('cors');
@@ -17,7 +22,7 @@ const { PRIORITY_BELOW_NORMAL, R_OK } = require('constants');
 const { count, time } = require('console');
 const { callbackify } = require('util');
 const { appendFile } = require('fs');
-const emailValidator = require('deep-email-validator');
+//const emailValidator = require('deep-email-validator');
 const validator = require('email-validator');
 const uuid = require('uuid');
 const app = express();
@@ -28,6 +33,10 @@ dotenv.config()
 //app.use(express.static('public'));
 app.use(bodyparser.urlencoded({ extended: true }));
 app.use(bodyparser.json());
+//////////////////////////////
+//app.set('view engine', 'ejs');
+app.use(expressLayouts);
+///////////////////////////////
 app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -213,8 +222,7 @@ app.post('/cart', (req, res) => {
   const { cart_id,user_id,product_id,quantity,price } = req.body;
   const cartId = uuid.v4();
  //console.log("UniqueId->"+uniqueId);
- 
- if(req.body.token==individualToken)
+  if(req.body.token==individualToken)
  {
    console.log("Token Checking Done SuccessFully");
    con.query('INSERT INTO cart(cart_id,user_id,product_id,quantity,price,date) VALUES (?,?,?,?,?,?)', [cartId,user_id,product_id,quantity,price,date], (err, result) => {
@@ -252,9 +260,33 @@ app.get('/shipBill', (req, res) => {
   }
 });
 //post useer forgot password
+app.get('/verifyEmail/:code', (req, res) => {
+  var { email,code } = req.body;
+const uniqueNumber=req.params.code;
+//Code to Get emailVerificationCode From Db
+con.query('SELECT emailVerificationCode FROM user WHERE emailVerificationCode=?', [uniqueNumber], (err, results) => {
+  if (err) throw err;
+  
+  res.json('EMAiL-VERiFiCATiON DONE=>[SUCCESSFULLY]');
+
+ if (!results=="") {
+    //res.render('set-newPassword');
+  
+  }
+  else
+  {
+    res.json('WRONG-VERiFiCATiON [LiNK]');
+  }
+});
+
+})
+//post useer forgot password
 app.post('/forgotPassword', (req, res) => {
-  var { name,password } = req.body;
- emailId=req.body.email;
+  let { email,password,passwordStatus } = req.body;
+  passwordStatus = req.body.passwordStatus ;
+ if(passwordStatus=="forgotPassword")
+ { 
+ let emailId=req.body.email;
  
  isvalid = validator.validate(emailId);
  if (isvalid == false) {
@@ -265,35 +297,46 @@ app.post('/forgotPassword', (req, res) => {
 }
 con.query('SELECT COUNT(*) AS count FROM user WHERE email=?', [emailId], (err, results) => {
   if (err) throw err;
-
   emailCount = results[0].count;
-  console.log("ForgotPasswordAreaEmailCount=>" + emailCount)
+  
   //Code Below to insert New user based on emailId
   if (isvalid && emailCount == 1) {
     //Code Below To Check Email-Verification
-    sentEmailToken.sendEmail('johnadam7x@gmail.com','0007');
+    let emailVerificationCode = uuid.v4();
     
+    //Code to Insert emailVerificationCode to user-Table
+    console.log(emailVerificationCode);
+    con.query("UPDATE user SET emailVerificationCode=? WHERE email=?" ,[emailVerificationCode,emailId], (err, result) => {
+      if (err) throw err;
+      //res.json({ message: 'Submitted Successfully' });
+   
+    })
+    sentEmailToken.sendEmail(emailId,emailVerificationCode);
   }
-  var emailVerificationResponse=sentEmailToken.sendEmail.emailVerificationResponse;
-        
-   if(sentEmailToken.sendEmail.emailVerificationResponse=="Verified")
-   {console.log(emailVerificationResponse); 
-   var bycryptForgotPassword = req.body.password
+    
+})
+
+ }
+ //passwordStatus=req.body.passwordStatus;
+ if(passwordStatus=="newPasswordSend")
+ {
+  var bycryptForgotPassword = req.body.password;
+  const email = req.body.email;
         bcrypt.hash(bycryptForgotPassword.toString(), salt, (err, hash) => {
           if (err) {
             console.log(err);
           }
           var forgotPasswordHash =hash;
-          console.log(forgotPasswordHash);
-   con.query("UPDATE user SET password=? WHERE name=?" ,[forgotPasswordHash,name], (err, result) => {
+          //console.log(forgotPasswordHash);
+   con.query("UPDATE user SET password=? WHERE email=?" ,[forgotPasswordHash,email], (err, result) => {
      if (err) throw err;
-     res.json({ message: 'Password Updated Successfully For UserName=>'+name });
+     res.json({ message: 'Password Updated Successfully=>'});
    
    })
                 
-  })
-   }
-})
+  })  
+ 
+}
 })
 
 //post useer forgot password for order placing

@@ -2,6 +2,7 @@ const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken'); 
 var emailVerificationResponse="";
 var emailVerificationNumber="";
+//pass: 'rptt nohl mjmf byrt'
 function sendEmail(userEmail,token4Email)
 {
 const transporter = nodemailer.createTransport({ 
@@ -11,7 +12,7 @@ const transporter = nodemailer.createTransport({
     service : 'gmail',
     
     auth: {
-      user: userEmail,
+      user: 'johnadam7x@gmail.com',
       pass: 'rptt nohl mjmf byrt'
 	} ,
 	tls:
@@ -28,7 +29,7 @@ const transporter = nodemailer.createTransport({
 const mailConfigurations = { 
 
 	// It should be a string of sender/server email 
-	from: ' johnadam7x@gmail.com', 
+	from: 'noreply@gmail.com', 
 
 	to: userEmail, 
 
@@ -39,7 +40,7 @@ const mailConfigurations = {
 	text: `Hi! There, You have recently visited 
 		our website and entered your email. 
 		Please follow the given link to verify your email 
-		http://localhost:3000/forgotpassword/${token4Email} 
+		http://localhost:3000/verifyEmail/${token4Email} 
 		Thanks` 
 	
 }; 
@@ -47,16 +48,9 @@ const mailConfigurations = {
 transporter.sendMail(mailConfigurations, function(error, info){ 
 	if (error) throw Error(error); 
 	console.log('Email Sent Successfully'); 
-    emailVerificationNumber=10;
     //console.log(info); 
 	
 }); 
-if(emailVerificationNumber==10)
-{
-	emailVerificationResponse="Verified";
-
-}
-return emailVerificationResponse;
 }
 module.exports={
     sendEmail
