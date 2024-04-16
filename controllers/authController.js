@@ -1,10 +1,12 @@
 // controllers/authController.js
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const uuid = require('uuid');
 const validator = require('email-validator');
 const UserModel = require('../models/AllUserDatabaseOperations');
 const { use } = require('../routes/authRoutes');
 const { restart } = require('nodemon');
+const sentEmailToken =require('d:/NodeTestExamples/shoppingcartal/email/sentEmailToken.js');
 
 const AuthController = {
   signin: async (req, res) => {
@@ -20,21 +22,18 @@ const AuthController = {
         message: "Please Enter Password!"
       })
     }
-    try {
       // Check if the user is already registered
       let existingUserName = await UserModel.findByUserName (name);
       if (!existingUserName) {
         return res.status(400).json({ error: 'Either User NOT Found [OR] iNVALID CREDENTiALS' });    
       }
       //// Check if the password is correct
-     }
-    catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'ENTERED CREDENTiALS NOT VALiD => KiNDLY RETRY' });
-    }           
+      
+      //res.status(500).json({ error: 'ENTERED CREDENTiALS NOT VALiD => KiNDLY RETRY' });
+               
     let user = await UserModel.findByUserName(name);
     let passwordMatch = await bcrypt.compare(password, user.password);
-    let token = jwt.sign({ userId: user.id }, 'secret_key', { expiresIn: '1h' });
+    let token = jwt.sign({ userId: user.id }, 'SECRET_KEY', { expiresIn: '1h' });
     try
     { 
     if(passwordMatch)
@@ -42,7 +41,7 @@ const AuthController = {
      await UserModel.userLogin(name,token);
      username=user.name;
          res.status(201).json({token,username});
-         res.send(200)
+         
      }
      else if (!passwordMatch) {
       return res.status(400).json({ error: 'Invalid credentials' });
@@ -63,7 +62,7 @@ const AuthController = {
           message: "Email Is Missing"
         })
       }
-      if(!email==true)
+      if(!email==false)
        {
          let emailVerificationCode = uuid.v4();
          sentEmailToken.sendEmail(email,emailVerificationCode);
@@ -112,7 +111,7 @@ const AuthController = {
       //
       try {
         // Check if the userName Exists
-        const existingUser = await UserModel.userLogin(name);
+        const existingUser = await UserModel.findByUserName(name);
         if (existingUser) {
           return res.status(400).json({ error: 'Email Already Exits With Us' });
         }
@@ -136,10 +135,11 @@ const AuthController = {
         
       } catch (error) {
         console.error(error);
-        res.status(500).json({ error: 'Failed To Create User => Either Email Already Exists or Wrong Pattern Entered' });
+        res.status(500).json({ error: 'Failed To Create User => Either Email Already Exists or Wrong Credentials' });
       }
 
-  }
+  },
+  
 
 };
 

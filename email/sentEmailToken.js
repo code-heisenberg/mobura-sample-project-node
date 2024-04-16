@@ -31,7 +31,7 @@ const mailConfigurations = {
 	// It should be a string of sender/server email 
 	from: 'noreply@gmail.com', 
 
-	to: userEmail, 
+	to: 'johnadam7x@gmail.com', 
 
 	// Subject of Email 
 	subject: 'Email Verification', 

@@ -1,6 +1,6 @@
 const http = require('http');
 const url = require('url');
-///////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////
 const expressLayouts = require('express-ejs-layouts');
 ///////////////////////////////////////////////////////////
 const authRoutes = require('./routes/authRoutes');
@@ -274,34 +274,35 @@ con.query('SELECT emailVerificationCode FROM user WHERE emailVerificationCode=?'
 })
 //post useer forgot password
 app.post('/forgotPassword', (req, res) => {
-  let { email,password,passwordStatus } = req.body;
+  let { email,passwordStatus } = req.body;
   passwordStatus = req.body.passwordStatus ;
  if(passwordStatus=="forgotPassword")
  { 
- let emailId=req.body.email;
- isvalid = validator.validate(emailId);
+  console.log(email);
+ isvalid = validator.validate(email);
  if (isvalid == false) {
   return res.status(400).send({
     message: "Please Provide [A] Valid Email Address"
   })
 
 }
-con.query('SELECT COUNT(*) AS count FROM user WHERE email=?', [emailId], (err, results) => {
+con.query('SELECT COUNT(*) AS count FROM user WHERE email=?', [email], (err, results) => {
   if (err) throw err;
   emailCount = results[0].count;
-  
   //Code Below to insert New user based on emailId
+  console.log(isvalid,emailCount);
   if (isvalid && emailCount == 1) {
     //Code Below To Check Email-Verification
     let emailVerificationCode = uuid.v4();
     //Code to Insert emailVerificationCode to user-Table
     console.log(emailVerificationCode);
-    con.query("UPDATE user SET emailVerificationCode=? WHERE email=?" ,[emailVerificationCode,emailId], (err, result) => {
+    con.query("UPDATE user SET emailVerificationCode=? WHERE email=?" ,[emailVerificationCode,email], (err, result) => {
       if (err) throw err;
       //res.json({ message: 'Submitted Successfully' });
    
     })
-    sentEmailToken.sendEmail(emailId,emailVerificationCode);
+    console.log(email);
+    sentEmailToken.sendEmail(email,emailVerificationCode);
   }
     
 })
