@@ -1,12 +1,24 @@
-require("dotenv").config();
+// app.js
 const express = require('express');
+const bodyParser = require('body-parser');
+const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
+const errorHandler = require('./middleware/errorHandler');
+
 const app = express();
-const productRouter = require("./router/routes/product.router")
 
-app.use(express.json());
-app.use("/api/products",productRouter);
+// Middleware
+app.use(bodyParser.json());
 
+// Routes
+app.use('/auth', authRoutes);
+app.use('/users', userRoutes);
 
-app.listen(process.env.APP_PORT,()=>{
-    console.log("Server Up And Running @",process.env.APP_PORT);
+// Error handling middleware
+app.use(errorHandler);
+
+// Start the server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });

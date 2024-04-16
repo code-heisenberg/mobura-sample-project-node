@@ -2,14 +2,16 @@ const http = require('http');
 const url = require('url');
 ///////////////////////////////////////////////////////
 const expressLayouts = require('express-ejs-layouts');
-///////////////////////////////////////////////////////
-//const router = require('./router/routes')
+///////////////////////////////////////////////////////////
+const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
+const errorHandler = require('./middleware/errorHandler');
+///////////////////////////////////////////////////////////
 const port = process.env.port || 3000;
 //const server = http.createServer(router);
 const express = require('express');
 const dotenv = require('dotenv');
 var mysql = require('mysql');
-
 var bodyparser = require('body-parser');
 var moment = require('moment');
 const cors = require('cors');
@@ -27,7 +29,7 @@ const validator = require('email-validator');
 const uuid = require('uuid');
 const app = express();
 const sentEmailToken =require('./email/sentEmailToken.js');
-//const { sendEmail } = require('./email/sentEmailToken.js');
+
 dotenv.config()
 //Db Connection Code Below
 //app.use(express.static('public'));
@@ -54,7 +56,7 @@ var con = mysql.createConnection({
   user: 'root',
   password: 'rooter1',
   database: 'shoppingcartal',
-  port: '3306',
+  port: '3306'
   /////////////////////////////
 
 })
@@ -74,7 +76,7 @@ con.connect(function (err) {
   var date=""
   var passwordCompareResult = ""
   var individualToken=""
-  var emailId=""
+  
   //var emailVerificationResponse=""
    productQuery=[]
    cartQuery=[]
@@ -83,7 +85,6 @@ con.connect(function (err) {
     const { name} = req.body;
     plainPassword = req.body.password;
     con.query('SELECT user_id,name,password  FROM user WHERE name=?', [name], (err, results) => {
-      //console.log(results[0],"<<<->>>"+results[0].toString.length)
       if(results[0]==null)
       {
         res.status(200).json({ Message: 'Seems You Entered Wrong Credentials' });
@@ -180,14 +181,12 @@ app.get('/userCart', (req, res) => {
   if(req.body.token==individualToken)
   {
       console.log("Token Checking Done SuccessFully");
-      
       var sqlQuery2=' SELECT p.product_id,p.product_name,c.quantity,c.price,SUM(c.quantity*c.price) AS Total_Price FROM product p INNER JOIN cart c ON p.product_id = c.product_id WHERE c.user_id=? GROUP BY p.product_id ';
       //var sqlQuery2='SELECT c.product_id,p.product_name,c.quantity,p.image,p.product_price,SUM(c.quantity*c.price) FROM product p INNER JOIN cart c ON p.product_id = c.product_id  WHERE user_id=?';
       ////////////////////////////////////////////////
       //below code will fetch all records of a userid
       ///////////////////////////////////////////////
       //var sqlQuery2='SELECT c.*,p.*,SUM(c.quantity*c.price) AS Total_Amount FROM product p INNER JOIN cart c ON p.product_id = c.product_id WHERE c.user_id=?';
-      
       con.query(sqlQuery2,[userId], (err, results) => {
         //cartQuery = results[0];
       if (err) throw err;
@@ -207,14 +206,7 @@ app.get('/userCart', (req, res) => {
       }
       res.json(response);
     });
-    //var sqlQuery1="SELECTproduct_id,quantity,SUM(total_amount)) FROM cart WHERE user_id=?"
-        //   con.query(sqlQuery2,[userId], (err, results) => {
-    //     cartQuery =results;
-    //   if (err) throw err;
-    //   var joinQuery=productQuery+cartQuery
-    //   res.json(joinQuery.toString());
-    // });
-  
+      
 }
 });
 //post Cartal api for Virtual Prodct Storing
@@ -275,7 +267,7 @@ con.query('SELECT emailVerificationCode FROM user WHERE emailVerificationCode=?'
   }
   else
   {
-    res.json('WRONG-VERiFiCATiON [LiNK]');
+    res.json('WRONG EMAiL-VERiFiCATiON [LiNK]');
   }
 });
 
@@ -287,7 +279,6 @@ app.post('/forgotPassword', (req, res) => {
  if(passwordStatus=="forgotPassword")
  { 
  let emailId=req.body.email;
- 
  isvalid = validator.validate(emailId);
  if (isvalid == false) {
   return res.status(400).send({
@@ -303,7 +294,6 @@ con.query('SELECT COUNT(*) AS count FROM user WHERE email=?', [emailId], (err, r
   if (isvalid && emailCount == 1) {
     //Code Below To Check Email-Verification
     let emailVerificationCode = uuid.v4();
-    
     //Code to Insert emailVerificationCode to user-Table
     console.log(emailVerificationCode);
     con.query("UPDATE user SET emailVerificationCode=? WHERE email=?" ,[emailVerificationCode,emailId], (err, result) => {
@@ -318,7 +308,7 @@ con.query('SELECT COUNT(*) AS count FROM user WHERE email=?', [emailId], (err, r
 
  }
  //passwordStatus=req.body.passwordStatus;
- if(passwordStatus=="newPasswordSend")
+ if(passwordStatus=="newPassword")
  {
   var bycryptForgotPassword = req.body.password;
   const email = req.body.email;
@@ -341,24 +331,37 @@ con.query('SELECT COUNT(*) AS count FROM user WHERE email=?', [emailId], (err, r
 
 //post useer forgot password for order placing
 app.post('/passwordReset', (req, res) => {
-  var { name,password } = req.body;
- 
- if(req.body.token==individualToken)
+  //const { email,passwordReset } = req.body;
+  const passwordStatus =req.body.passwordReset;
+  const email =req.body.email;
+  const password = req.body.password;
+ if(passwordStatus=="passwordReset")
  {
-   console.log("Token Checking Done SuccessFully");
-   var bycryptForgotPassword = req.body.password
+  let emailVerificationCode = uuid.v4();
+  sentEmailToken.sendEmail(emailId,emailVerificationCode);  
+  if(passwordStatus=="newPassword")
+ {
+  var bycryptForgotPassword = password;
         bcrypt.hash(bycryptForgotPassword.toString(), salt, (err, hash) => {
           if (err) {
             console.log(err);
           }
           var forgotPasswordHash =hash;
           console.log(forgotPasswordHash);
-   con.query("UPDATE user SET password=? WHERE name=?" ,[forgotPasswordHash,name], (err, result) => {
+   con.query("UPDATE user SET password=? WHERE email=?" ,[forgotPasswordHash,email], (err, result) => {
      if (err) throw err;
-     res.json({ message: 'Password Updated Successfully For UserNAme=>'+name });
+     if(!results=="")
+     {
+      res.json({ message: 'Password Updated Successfully=>'});
+     }
+     else
+     {
+      res.json({ message: 'Wrong Email-Id Typed :=> Please Type The Correct Email-Id'});
+     }
   
    })
   })
+}
  }
 })
 //post product api for order placing
@@ -425,7 +428,14 @@ app.get('/productId', (req, res) => {
         message: "Email  Missing"
       })
     }
-     
+     if(!emailId==true)
+     {
+       let emailVerificationCode = uuid.v4();
+       sentEmailToken.sendEmail(emailId,emailVerificationCode);
+       return res.status(200).send({
+        message: "An Email Sent To Your Email-Id :=> Kindly Click The Link Inside Email To Compelete Email-Verification!"
+      })
+     }
     
     if (name.length==0) {
       message="name is Missing"
@@ -478,7 +488,7 @@ app.get('/productId', (req, res) => {
             console.log(err);
           }
           var bycrypted = hash;
-          con.query('INSERT INTO user (user_id,email,name,dob,address,password,mobile) VALUES (?, ?,?,?,?,?)', [user_id, email, name, dob, address, bycrypted,mobile], (err, result) => {
+          con.query('INSERT INTO user (user_id,email,name,dob,address,password,mobile) VALUES (?,?,?,?,?,?,?)', [user_id, email, name, dob, address, bycrypted,mobile], (err, result) => {
             if (err) throw err;
             res.json({ message: 'User Added Successfully=>Thanks For SignUp' });
           });
