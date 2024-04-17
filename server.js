@@ -256,6 +256,7 @@ app.get('/verifyEmail/:code', (req, res) => {
   var { email,code } = req.body;
 const uniqueNumber=req.params.code;
 //Code to Get emailVerificationCode From Db
+console.log("Entered verifyEmail Get-api")
 con.query('SELECT emailVerificationCode FROM user WHERE emailVerificationCode=?', [uniqueNumber], (err, results) => {
   if (err) throw err;
   
@@ -295,13 +296,13 @@ con.query('SELECT COUNT(*) AS count FROM user WHERE email=?', [email], (err, res
     //Code Below To Check Email-Verification
     let emailVerificationCode = uuid.v4();
     //Code to Insert emailVerificationCode to user-Table
-    console.log(emailVerificationCode);
+    //console.log(emailVerificationCode);
     con.query("UPDATE user SET emailVerificationCode=? WHERE email=?" ,[emailVerificationCode,email], (err, result) => {
       if (err) throw err;
       //res.json({ message: 'Submitted Successfully' });
    
     })
-    console.log(email);
+    //console.log(email);
     sentEmailToken.sendEmail(email,emailVerificationCode);
   }
     
@@ -473,9 +474,9 @@ app.get('/productId', (req, res) => {
       //Code Below to insert New user based on emailId
       if (isvalid && emailCount == 0) {
         //Code Below To Check Email-Verification
-       var emailVerificationResponse=sentEmailToken.sendEmail.emailVerificationResponse;
-        console.log(emailVerificationResponse); 
-    if (emailCount == 0 && sentEmailToken.sendEmail.emailVerificationResponse!="Verified") {
+       //var emailVerificationResponse=sentEmailToken.sendEmail.emailVerificationResponse;
+        
+    if (emailCount == 0) {
       
       return res.status(200).send({
         message: "Please Verify Your Email By Click The Link Send To Your=>"+ emailId

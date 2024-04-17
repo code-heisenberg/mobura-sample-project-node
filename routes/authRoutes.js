@@ -5,5 +5,6 @@ const AuthController = require('../controllers/authController');
 
 router.post('/signin', AuthController.signin);
 router.post('/signup', AuthController.signup);
+router.get('/verifyEmail/:code', AuthController.verifyEmail);
 
 module.exports = router;

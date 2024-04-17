@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer'); 
 const jwt = require('jsonwebtoken'); 
-var emailVerificationResponse="";
+var emailVerificationResponse="false";
 var emailVerificationNumber="";
 //pass: 'rptt nohl mjmf byrt'
 function sendEmail(userEmail,token4Email)
@@ -40,7 +40,7 @@ const mailConfigurations = {
 	text: `Hi! There, You have recently visited 
 		our website and entered your email. 
 		Please follow the given link to verify your email 
-		http://localhost:3000/verifyEmail/${token4Email} 
+		http://localhost:3000/auth/verifyEmail/${token4Email} 
 		Thanks` 
 	
 }; 
