@@ -76,8 +76,7 @@ con.connect(function (err) {
   var date=""
   var passwordCompareResult = ""
   var individualToken=""
-  
-  //var emailVerificationResponse=""
+    
    productQuery=[]
    cartQuery=[]
 
@@ -260,10 +259,12 @@ console.log("Entered verifyEmail Get-api")
 con.query('SELECT emailVerificationCode FROM user WHERE emailVerificationCode=?', [uniqueNumber], (err, results) => {
   if (err) throw err;
   
-  res.json('EMAiL-VERiFiCATiON DONE=>[SUCCESSFULLY]');
-
+  
  if (!results=="") {
+
     //res.render('set-newPassword');
+    res.json('EMAiL-VERiFiCATiON DONE=>[SUCCESSFULLY]');
+
   
   }
   else

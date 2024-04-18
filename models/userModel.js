@@ -61,7 +61,6 @@ const UserModel = {
     const values = [Code];
     try {
       const [user] = await db.query(sql, values);
-      
       return user;
     } catch (error) {
       throw new Error('Database error: ' + error.message);

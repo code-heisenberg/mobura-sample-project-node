@@ -1,5 +1,6 @@
 // controllers/userController.js
-const UserModel = require('../models/AllUserDatabaseOperations');
+const UserModel = require('../models/userModel.js');
+
 
 const UserController = {
   getAllUsers: async (req, res) => {

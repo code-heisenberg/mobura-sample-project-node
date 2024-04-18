@@ -1,8 +1,6 @@
 const nodemailer = require('nodemailer'); 
 const jwt = require('jsonwebtoken'); 
-var emailVerificationResponse="false";
-var emailVerificationNumber="";
-//pass: 'rptt nohl mjmf byrt'
+//pass: 'rptt nohl mjmf byrt'    Gmail-App Password under 2-way Verification Section
 function sendEmail(userEmail,token4Email)
 {
 const transporter = nodemailer.createTransport({ 

@@ -3,141 +3,121 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const uuid = require('uuid');
 const validator = require('email-validator');
-const UserModel = require('../models/AllUserDatabaseOperations');
+const UserModel = require('../models/userModel');
 const { use, link } = require('../routes/authRoutes');
 const { restart } = require('nodemon');
-const sentEmailToken =require('d:/NodeTestExamples/shoppingcartal/email/sentEmailToken.js');
-
+const sentEmailToken = require('../email/sentEmailToken');
+const responseUtils = require('../utils/responseUtils');
 const AuthController = {
+
   signin: async (req, res) => {
-    // Implement login logic
+    // Implement SignIn 
     const {  name, password } = req.body;
-    if (!name) {
-      return res.status(400).send({
-        message: "Please Enter UserName!"
-      })
-    }
-    if (!password) {
-      return res.status(400).send({
-        message: "Please Enter Password!"
-      })
-    }
+    if (!name==true && name.toString().length==0) {
+         responseUtils.returnStatusCodeWithMessage(res,400,'Please ENTER Name => Name Cannot Be Blank');
+      }
+    if (!password==true && password.toString().length==0) {
+     
+       responseUtils.returnStatusCodeWithMessage(res,400,'Please Enter Password!');
+      }
       // Check if the user is already registered
       let existingUserName = await UserModel.findByUserName (name);
-      if (!existingUserName) {
+      if (!existingUserName && !name==false) {
         return res.status(400).json({ error: 'Either User NOT Found [OR] iNVALID CREDENTiALS' });    
       }
-      //// Check if the password is correct
-      
-      //res.status(500).json({ error: 'ENTERED CREDENTiALS NOT VALiD => KiNDLY RETRY' });
-               
+     if(!name==false)
+     { 
+    //// Check if the password is correct
     let user = await UserModel.findByUserName(name);
+    
     let passwordMatch = await bcrypt.compare(password, user.password);
-    console.log(password,"<=>",user.name);
+    //jwt Token User Sign-In
     let token = jwt.sign({ userId: user.id }, 'SECRET_KEY', { expiresIn: '1h' });
     try
     { 
+    //If password Matches Then => Code to delete userTemp Data of the Logged User
+    //After that name and token is passed to front-end
     if(passwordMatch)
      { 
       await UserModel.deleteUser(user.name);
       await UserModel.userLogin(name,token);
-     username=user.name;
-         res.status(200).json({token,username});
-         
+      username=user.name;
+      res.status(200).json({token,username});
+      }
+      else if (!passwordMatch) {
+      responseUtils.returnStatusCodeWithMessage(res,400,'Invalid credentials');
      }
-     else if (!passwordMatch) {
-      return res.status(400).json({ error: 'Invalid credentials' });
-    }
+    
   }
   catch(err)
   {
     //return res.status(400).json({error:err});
+    responseUtils.returnStatusCodeWithMessage(res,400,err);
   }
-
+   }
+  
   },
-
   signup: async (req, res) => {
     // Implement registration logic
     try {
-        
+    //All fields are Checked and Validated Below    
     const { user_id,email, name, dob, address, password,mobile,emailVerificationCode } = req.body;
     if (!email) {
-        return res.status(400).send({
-          message: "Email Is Missing"
-        })
+      responseUtils.returnStatusCodeWithMessage(res,400,'Email Is Missing');
+        
       }
       if(!email==false)
        {
-        // Check if the userName Exists
+        // Check if the userName Exists as Same UserName cannot be created
         const existingUser = await UserModel.findByUserName(name);
         if (existingUser) {
-          return res.status(400).json({ error: 'Email Already Exits With Us' });
+          responseUtils.returnStatusCodeWithMessage(res,400,'Email Already Exits With Us');
         }
-   
         let emailVerificationCode = uuid.v4();
-        //UserModel.insertemailVerificationCode(emailVerificationCode);
+        //Email Verification Format checker
         let isvalid = validator.validate(email);
-        console.log(email,isvalid);
+        //After Email Verification Format Checker. Code below to Send Email-Link To Verify Email
         if(isvalid==true)
         {
           UserModel.tempCreateUser(user_id,email, name, dob, address, password,mobile,emailVerificationCode);
           sentEmailToken.sendEmail(email,emailVerificationCode);
-           res.status(200).send({
-           message: "An Email Sent To Your Email-Id :=> Kindly Click The Link Inside Email To Compelete Email-Verification!"
-         })
-         /////VerifyEmail here Logic
-
-         
-
+          responseUtils.returnStatusCodeWithMessage(res,400,'An Email Sent To Your Email-Id :=> Kindly Click The Link Inside Email To Compelete Email-Verification!');
         }
         else
         {
-          return res.status(400).send({
-          message: "Please Provide [A] Valid Email Address" });
+          responseUtils.returnStatusCodeWithMessage(res,400,'Please Provide [A] Valid Email Address!');
         }
-
          
        }
        if (!name) {
-        return res.status(400).send({
-          message: "Name Is Missing"
-        })
+         await responseUtils.returnStatusCodeWithMessage(res,400,'Name is Missing');
       }
       if (!name==false && name.toString().length<=3) {
-        return res.status(400).send({
-          message: "Name Is Too-> Short"
-        })
+        responseUtils.returnStatusCodeWithMessage(res,400,'Name iS Too Short!');
+        
       }
       if(!name==false && name.toString().length>3)
       {
         const existingUserName = await UserModel.findByUserName (name);
         if (existingUserName) {
-          return res.status(400).json({ error: 'UserName Already Taken=> Kindly Use Another UserName' });
+            responseUtils.returnStatusCodeWithMessage(res,400,'UserName Already Taken=> Kindly Use Another UserName');
         }
       }
       if (!dob) {
-        return res.status(400).send({
-          message: "Date Of Birth Missing"
-        })
+        responseUtils.returnStatusCodeWithMessage(res,400,'Date Of Birth => Is Missing');
       }
       if (!address) {
-        return res.status(400).send({
-          message: "Address Missing"
-        })
+        responseUtils.returnStatusCodeWithMessage(res,400,'Address is Missing');
       }
       if (!password) {
-        return res.status(400).send({
-          message: "Please Enter [A] Password of Your Choice"
-        })
+        responseUtils.returnStatusCodeWithMessage(res,400,'Password is Missing');
       }
       if (!mobile) {
-        return res.status(400).send({
-          message: "Please Enter [A] Valid Mobile->Number"
-        })
+        responseUtils.returnStatusCodeWithMessage(res,400,'Mobile-Number is Missing');
       }
      } catch (error) {
         console.error(error);
-        //res.status(500).json({ error: 'Failed To Create User => Either Email Already Exists or Wrong Credentials' });
+        
       }
 
   },
@@ -148,11 +128,12 @@ const AuthController = {
     const code=req.params.code;
     //Code to Get emailVerificationCode From Db with other fields to copy to userTable
     const  userdetails= await UserModel.findByEmailVerificationCode(code)
-           
+    //Email Verifivation Done Here       
     if(userdetails.emailverificationcode==code)
-    {//const hashedPassword = await bcrypt.hash(password, 10);
-         await UserModel.createUser(userdetails.user_id,userdetails.email,userdetails.name,userdetails.dob,userdetails.address,userdetails.password,userdetails.mobile);
-          res.status(200).json('Email Verified & User Added Successfully=>Thanks For SignUp');
+    {
+      //Already Password is Encrypted in userTemp Table,So Here No Need To Encrypt  
+      await UserModel.createUser(userdetails.user_id,userdetails.email,userdetails.name,userdetails.dob,userdetails.address,userdetails.password,userdetails.mobile);
+      responseUtils.returnStatusCodeWithMessage(res,200,'Email Verified & User Added Successfully=>Thanks For SignUp');
     }
   }
   catch (error) {
