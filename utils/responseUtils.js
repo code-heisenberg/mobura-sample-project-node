@@ -1,8 +1,8 @@
 // utils/responseUtils.js
 const dotenv = require('dotenv');
- async function returnStatusCodeWithMessage(res,code,message)
+ function returnStatusCodeWithMessage(res,code,message)
     {
-      return  await res.status(code).send({
+      return  res.status(code).send({
         message: message
     });
   }

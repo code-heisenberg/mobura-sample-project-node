@@ -70,20 +70,20 @@ const AuthController = {
        {
         // Check if the userName Exists as Same UserName cannot be created
         const existingUser = await UserModel.findByUserName(name);
-        if (existingUser) {
-          responseUtils.returnStatusCodeWithMessage(res,400,'Email Already Exits With Us');
-        }
+        
         let emailVerificationCode = uuid.v4();
         //Email Verification Format checker
         let isvalid = validator.validate(email);
+        
         //After Email Verification Format Checker. Code below to Send Email-Link To Verify Email
-        if(isvalid==true)
+        console.log(existingUser);
+        if(isvalid==true && existingUser==undefined)
         {
           UserModel.tempCreateUser(user_id,email, name, dob, address, password,mobile,emailVerificationCode);
           sentEmailToken.sendEmail(email,emailVerificationCode);
-          responseUtils.returnStatusCodeWithMessage(res,400,'An Email Sent To Your Email-Id :=> Kindly Click The Link Inside Email To Compelete Email-Verification!');
+          responseUtils.returnStatusCodeWithMessage(res,201,'An Email Sent To Your Email-Id :=> Kindly Click The Link Inside Email To Compelete Email-Verification!');
         }
-        else
+        else if(isvalid==false)
         {
           responseUtils.returnStatusCodeWithMessage(res,400,'Please Provide [A] Valid Email Address!');
         }
