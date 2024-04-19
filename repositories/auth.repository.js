@@ -1,12 +1,24 @@
-const { structureResponse, hashPassword } = require('../utils/common.utils');
-const bcrypt = require('bcryptjs');
+//const { structureResponse, hashPassword } = require('../utils/common.utils');
+const bcrypt = require('bcrypt');
+const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
-const { sendOTPEmail } = require('../utils/sendgrid.utils');
-const otpGenerator = require('otp-generator');
-const { Config } = require('../configs/config');
+const { structureResponse } = require('../utils/common.utils');
 
-const UserModel = require('../models/user.model');
-const OTPModel = require('../models/otp.model');
+//const { sendOTPEmail } = require('../utils/sendgrid.utils');
+const otpGenerator = require('otp-generator');
+const hashPassword = require('../configs/passwordEncrypt');
+//const { Config } = require('../configs/config');
+//const hashedPassword = require('../configs/passwordEncrypt');
+const UserModel = require('../models/userModel');
+//const OTPModel = require('../models/otp.model');
+const express = require('express');
+const bodyParser = require('body-parser');
+const existingUserok = require('../controllers/authController');
+
+const app = express();
+
+app.use(bodyParser.json()); // Parse JSON bodies
+app.use(bodyParser.urlencoded({ extended: true }));
 const {
     RegistrationFailedException,
     InvalidCredentialsException,
@@ -21,56 +33,50 @@ const {
     UpdateFailedException,
     UnexpectedException
 } = require('../utils/exceptions/database.exception');
-
+const AuthController = require('../controllers/authController');
+const { json } = require('body-parser');
 
 class AuthRepository {
-
-    registerUser = async (body) => {
-        const pass = body.password;
-
-        await hashPassword(body);
-
-        const result = await UserModel.create(body);
-
-        if (!result) {
+    registerUser =  async (body,emailverificationcode,emailStatus) => {
+        //const bycryptPassword = await hashPassword(password);
+        if(emailStatus=="sentForVerificationCode")
+        {
+          let tempuserdata =body;
+          let result = await UserModel.tempCreateUser(tempuserdata.user_id,tempuserdata.email,tempuserdata.name,tempuserdata.dob,tempuserdata.address,tempuserdata.password,tempuserdata.mobile,emailverificationcode);
+        }
+        if(emailStatus=="verified")
+        {
+            const result =  await UserModel.createUser(body[0],body[1],body[2],body[3],body[4],body[5],body[6]);
+            if (!result) {
             throw new RegistrationFailedException();
         }
-
-        return this.userLogin(body.email, pass, true);
+     }
+        
     };
-
-    userLogin = async (email, pass, is_register = false) => {
-        const user = await UserModel.findOne({ email });
-        if (!user) {
-            throw new InvalidCredentialsException('Email not registered');
-        }
-
-        const isMatch = await bcrypt.compare(pass, user.password);
-
-        if (!isMatch) {
-            throw new InvalidCredentialsException('Incorrect password');
-        }
-
-        // user matched!
-        const secretKey = Config.SECRET_JWT;
-        const token = jwt.sign({ user_id: user.user_id.toString() }, secretKey, {
-            expiresIn: '24h'
-        });
-
-        let message = "";
-        let responseBody = "";
-        if (is_register){ // if registered first
-            const { user_id } = user;
-            message = "Registered"; // set msg to registered
-            responseBody = { user_id, token };
-        } else {
-            user.password = undefined;
-            message = "Authenticated";
-            responseBody = { ...user, token };
-        }
-        return structureResponse(responseBody, 1, message);
-    };
-
+    userLogin = async (userName,password) => {
+     if(!userName==false)
+     { 
+    //// Check if the password is correct
+    let user = await UserModel.findByUserName(userName);
+    if(user)
+    {
+        //// Check if the password is correct
+    let passwordMatch = await bcrypt.compare(password, user.password);
+    //jwt Token User Sign-In after Password - Match
+    if(userName==user.userName && passwordMatch)
+    {
+        let token = jwt.sign({ userId: user.id }, 'SECRET_KEY', { expiresIn: '1h' });
+        UserModel.userLogin(userName,token);
+        return structureResponse({'userName':userName,'token':token}, 1, 'Loggen-IN SuccessFully');
+    }
+    
+    if(user==undefined)
+    {
+        return structureResponse({'userName':'','token':''}, 1, 'Invalid Credentials');
+    }
+}
+   }
+   };
     refreshToken = async (body) => {
         const { email, password: pass, oldToken } = body;
         const user = await UserModel.findOne({ email });
@@ -208,7 +214,7 @@ class AuthRepository {
         else if (affectedRows && !changedRows) throw new UpdateFailedException('Password change failed');
         
         return structureResponse(info, 1, 'Password changed successfully');
-    }
+    };
 }
 
 module.exports = new AuthRepository;

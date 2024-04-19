@@ -1,13 +1,15 @@
 // models/userModel.js
-const db = require('../config/database');
+const db = require('../configs/database');
 const bcrypt = require('bcrypt');
 
 const UserModel = {
-  createUser: async (user_id,email,name,dob,address,password,mobile) => {
+  createUser: async (user_id,email,userName,dob,address,password,mobile) => {
     
     //const hashedPassword = await bcrypt.hash(password, 10);
-    const sql = 'INSERT INTO user (user_id,email,name,dob,address,password,mobile) VALUES (?,?,?,?,?,?,?)';
-    const values = [user_id,email,name,dob,address,password,mobile];
+    //console.log(user_id,email,name,dob,address,password,mobile);
+    const sql = 'INSERT INTO user (user_id,email,userName,dob,address,password,mobile) VALUES (?,?,?,?,?,?,?)';
+    const values = [user_id,email,userName,dob,address,password,mobile];
+    
     try {
       await db.query(sql, values);
     } catch (error) {
@@ -16,7 +18,7 @@ const UserModel = {
   },
   tempCreateUser: async (user_id,email,userName,dob,address,password,mobile,emailVerificationCode) => {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const sql = 'INSERT INTO usertemp (user_id,email,name,dob,address,password,mobile,emailverificationcode) VALUES (?,?,?,?,?,?,?,?)';
+    const sql = 'INSERT INTO usertemp (user_id,email,name,dob,address,password,mobile,emailVerificationCode) VALUES (?,?,?,?,?,?,?,?)';
     const values = [user_id,email,userName,dob,address,hashedPassword,mobile,emailVerificationCode];
     try {
       await db.query(sql, values);
@@ -26,7 +28,7 @@ const UserModel = {
   },
 
   findById: async (email) => {
-    const sql = 'SELECT * FROM user WHERE email = ?';
+    const sql = 'SELECT * FROM user WHERE userName = ?';
     const values = [email];
     try {
       const [user] = await db.query(sql, values);
@@ -47,7 +49,17 @@ const UserModel = {
     }
   },
   findByUserName: async (userName) => {
-    const sql = 'SELECT * FROM user WHERE name = ?';
+    const sql = 'SELECT * FROM user WHERE userName = ?';
+    const values = [userName];
+    try {
+      const [user] = await db.query(sql, values);
+      return user;
+    } catch (error) {
+      throw new Error('Database error: ' + error.message);
+    }
+  },
+  findByTempUserName: async (userName) => {
+    const sql = 'SELECT user_id,email,name,dob,address,password,mobile FROM usertemp WHERE name = ?';
     const values = [userName];
     try {
       const [user] = await db.query(sql, values);
@@ -59,6 +71,16 @@ const UserModel = {
   findByEmailVerificationCode: async (Code) => {
     const sql = 'SELECT user_id,email,name,dob,address,password,mobile,emailverificationcode FROM usertemp WHERE emailverificationcode = ?';
     const values = [Code];
+    try {
+      const [user] = await db.query(sql, values);
+      return user;
+    } catch (error) {
+      throw new Error('Database error: ' + error.message);
+    }
+  },
+  withOutEmailVerificationCode: async (username) => {
+    const sql = 'SELECT user_id,email,name,dob,address,password,mobile FROM usertemp WHERE name = ?';
+    const values = [username];
     try {
       const [user] = await db.query(sql, values);
       return user;
