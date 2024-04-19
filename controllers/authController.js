@@ -11,7 +11,8 @@ const responseUtils = require('../utils/responseUtils');
 const authRepository = require('../repositories/auth.repository');
 const express = require('express');
 const bodyParser = require('body-parser');
-const { userLogin } = require('../models/userModel');
+const { userLogins } = require('../models/userModel');
+const { json } = require('body-parser');
 const app = express();
 app.use(bodyParser.json()); // Parse JSON bodies
 //app.use(bodyParser.urlencoded({ extended: true }));
@@ -22,7 +23,7 @@ const AuthController = {
     try
     {
     const {  userName, password } = req.body;
-    console.log(userName,password);
+    
       if(!userName)
       {
         responseUtils.returnStatusCodeWithMessage(res,400,'Please Enter UserName!');
@@ -31,40 +32,26 @@ const AuthController = {
       {
         responseUtils.returnStatusCodeWithMessage(res,400,'Please Enter Password!');
       }
-     
-  let response= await authRepository.userLogin(userName,password);
-  if(response.length!=undefined)
-  {
-  responseUtils.returnStatusCodeWithMessage(res,200,response);
-    }
-    console.log(response);
-  if(response==undefined)
-  {
-    responseUtils.returnStatusCodeWithMessage(res,400,response);
-  }
-    
+   let response= await authRepository.userLogin(userName,password);
+   
+   if(response.length==undefined)
+   {
+    let responseObject = JSON.stringify(response);
+
+// Access the 'message' field
+let message = responseObject.toString().substring(34,55);
+
+console.log(message);
+    responseUtils.returnStatusCodeWithMessage(res,400,message);}
+   
      }
   catch(err)
   {
     //return res.status(400).json({error:err});
     //responseUtils.returnStatusCodeWithMessage(res,400,err);
+    console.log(err);
   }
-    
-        
-    
       
-    
-      //console.log(existingUserName);
-    //   if (!existingUserName && !userName==false) {
-    //        responseUtils.returnStatusCodeWithMessage(res,400,'Either User NOT Found [OR] iNVALID CREDENTiALS');
-    //   }
-    //  authRepository.userLogin(userName,password);
-    // }
-    // catch(error)
-    // {
-    //   //responseUtils.returnStatusCodeWithMessage(res,400,error);
-    // }
-  
   },
   signup: async (req, res) => {
     // Implement registration logic

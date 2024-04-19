@@ -1,9 +1,7 @@
-//const { structureResponse, hashPassword } = require('../utils/common.utils');
 const bcrypt = require('bcrypt');
 const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
 const { structureResponse } = require('../utils/common.utils');
-
 //const { sendOTPEmail } = require('../utils/sendgrid.utils');
 const otpGenerator = require('otp-generator');
 const hashPassword = require('../configs/passwordEncrypt');
@@ -14,9 +12,7 @@ const UserModel = require('../models/userModel');
 const express = require('express');
 const bodyParser = require('body-parser');
 const existingUserok = require('../controllers/authController');
-
 const app = express();
-
 app.use(bodyParser.json()); // Parse JSON bodies
 app.use(bodyParser.urlencoded({ extended: true }));
 const {
@@ -27,7 +23,6 @@ const {
     OTPGenerationException,
     OTPVerificationException
 } = require('../utils/exceptions/auth.exception');
-
 const {
     NotFoundException,
     UpdateFailedException,
@@ -35,7 +30,6 @@ const {
 } = require('../utils/exceptions/database.exception');
 const AuthController = require('../controllers/authController');
 const { json } = require('body-parser');
-
 class AuthRepository {
     registerUser =  async (body,emailverificationcode,emailStatus) => {
         //const bycryptPassword = await hashPassword(password);
@@ -50,32 +44,34 @@ class AuthRepository {
             if (!result) {
             throw new RegistrationFailedException();
         }
-     }
-        
-    };
+    }}
     userLogin = async (userName,password) => {
-     if(!userName==false)
-     { 
     //// Check if the password is correct
+    try
+    {
     let user = await UserModel.findByUserName(userName);
     if(user)
     {
         //// Check if the password is correct
     let passwordMatch = await bcrypt.compare(password, user.password);
     //jwt Token User Sign-In after Password - Match
-    if(userName==user.userName && passwordMatch)
+    if(userName && passwordMatch)
     {
         let token = jwt.sign({ userId: user.id }, 'SECRET_KEY', { expiresIn: '1h' });
         UserModel.userLogin(userName,token);
         return structureResponse({'userName':userName,'token':token}, 1, 'Loggen-IN SuccessFully');
     }
     
-    if(user==undefined)
-    {
-        return structureResponse({'userName':'','token':''}, 1, 'Invalid Credentials');
     }
+return structureResponse({'userName':'','token':''}, 1, 'Invalid Credentials');
+    
 }
-   }
+ 
+catch(Error)
+{
+    return structureResponse({'userName':'','token':''}, 1, Error);
+}
+        
    };
     refreshToken = async (body) => {
         const { email, password: pass, oldToken } = body;
@@ -89,19 +85,15 @@ class AuthRepository {
         if (!isMatch) {
             throw new InvalidCredentialsException('Incorrect password');
         }
-
         // user matched!
         const secretKey = Config.SECRET_JWT;
         const { user_id } = jwt.decode(oldToken);
-        
         if (user.user_id.toString() !== user_id){
             throw new TokenVerificationException();
         }
-        
         const token = jwt.sign({ user_id: user.user_id.toString() }, secretKey, {
             expiresIn: '24h'
         });
-
         return structureResponse({ token }, 1, "Refreshed");
     };
 
@@ -119,7 +111,7 @@ class AuthRepository {
         sendOTPEmail(user, OTP);
 
         return structureResponse({}, 1, 'OTP generated and sent via email');
-    }
+    };
 
     #generateOTP = async (user_id, email) => {
         const OTP = `${otpGenerator.generate(4, { alphabets: false, upperCase: false, specialChars: false })}`;
@@ -135,7 +127,7 @@ class AuthRepository {
         if (!result) throw new OTPGenerationException();
 
         return OTP;
-    }
+    };
 
     #removeExpiredOTP = async (user_id) => {
         const result = await OTPModel.findOne({user_id});
@@ -147,7 +139,7 @@ class AuthRepository {
                 throw new OTPGenerationException('Expired OTP could not be deleted');
             }
         }
-    }
+    };
 
     verifyOTP = async (body) => {
         const {OTP, email} = body;
@@ -176,7 +168,7 @@ class AuthRepository {
         }
 
         return structureResponse({}, 1, 'OTP verified succesfully');
-    }
+    };
 
     changePassword = async (body) => {
         const { email, password, new_password } = body;
@@ -216,5 +208,5 @@ class AuthRepository {
         return structureResponse(info, 1, 'Password changed successfully');
     };
 }
-
+    
 module.exports = new AuthRepository;
