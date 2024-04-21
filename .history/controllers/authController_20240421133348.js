@@ -122,6 +122,7 @@ const AuthController = {
       //To get code from Email-Link
       const code = req.params.code;
       //Code to Get emailVerificationCode From Db with other fields to copy to userTable
+      //Email Verifivation Done Here       
        let response = await authRepository.registerUser(code,'emailOtpVerification');
        let message = response.headers.message;
        console.log(message);
