@@ -5,6 +5,8 @@ const uuid = require('uuid');
 const UserModel = require('../models/userModel');
 const { use, link } = require('../routes/authRoutes');
 const { restart } = require('nodemon');
+const sentEmails = require('../email/emailVerificationSystem');
+const sendEmailOtp = require('../email/emailOtp');
 const responseUtils = require('../utils/responseUtils');
 const authRepository = require('../repositories/auth.repository');
 const express = require('express');
@@ -64,9 +66,7 @@ const AuthController = {
         //After Email Verification Format Checker. Code below to Send Email-Link To Verify Email
         if (isEmailvalid == true && existingUser == undefined) {
           //let response = await authRepository.registerUser(req.body, "sentForEmailOtpVerification");
-          //let response = await authRepository.registerUser(req.body, "sentForMobileOtpVerification");
           let response = await authRepository.registerUser(req.body, "sentForEmailVerification");
-
 
           let message = response.headers.message;
            responseUtils.returnStatusCodeWithMessage(res, 201, message);
@@ -133,22 +133,8 @@ const AuthController = {
     catch (error) {
       console.error(error);
     }
-  },
-  verifyMobileOtp: async (req, res) => {
-    try {
-      //To get code from Email-Link
-      const code = req.params.code;
-      //Code to Get emailVerificationCode From Db with other fields to copy to userTable
-       let response = await authRepository.registerUser(code,'mobileOtpVerification');
-       let message = response.headers.message;
-       console.log(message);
-       responseUtils.returnStatusCodeWithMessage(res, 200, message);
-      
-    }
-    catch (error) {
-      console.error(error);
-    }
   }
+
 };
 
 module.exports = AuthController;

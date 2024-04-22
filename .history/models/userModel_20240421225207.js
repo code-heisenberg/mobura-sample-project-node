@@ -139,7 +139,7 @@ const UserModel = {
       throw new Error('Database error: ' + error.message);
     }
   },
-  userLogin: async (userName,token) => {
+  userLogin: async (userName,password) => {
     let activity="active";
     let date = Date();
     const sql = 'INSERT INTO login (userName,token,activity,date) VALUES (?,?,?,?)';

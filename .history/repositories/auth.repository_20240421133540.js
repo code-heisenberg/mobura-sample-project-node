@@ -13,13 +13,11 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const existingUserok = require('../controllers/authController');
 const emailVerifications =require('../email/emailVerificationSystem');
-const mobileOtpVerifications =require('../email/mobileOtpVerification');
 const emailOtp=require('../email/emailOtp');
 const uuid = require('uuid');
 const app = express();
 app.use(bodyParser.json()); // Parse JSON bodies
 app.use(bodyParser.urlencoded({ extended: true }));
-
 const {
     RegistrationFailedException,
     InvalidCredentialsException,
@@ -43,7 +41,8 @@ class AuthRepository {
         {
         let otp_Time =[];
         if(emailCodeStatus=="sentForEmailOtpVerification")
-        {   otp_Time = emailOtp.sendEmailOtp('prince.mobura@gmail.com');
+        {
+            otp_Time = emailOtp.sendEmailOtp('prince.mobura@gmail.com');
             if (!otp_Time || Date.now() > otp_Time.expiry) {
                 console.log("otp timeOut");
                 return res.status(400).send('OTP expired or invalid');
@@ -53,6 +52,7 @@ class AuthRepository {
           let result = await UserModel.tempCreateUser(tempuserdata.user_id,tempuserdata.email,tempuserdata.userName,tempuserdata.dob,tempuserdata.address,tempuserdata.password,tempuserdata.mobile,emailverificationcode,otp_Time.otp,otp_Time.expiry);
           return structureResponse({'userName':"",'With-OTP':""}, 1,'Email-OTP Verification is Pending' );
         }
+        
         // Verify OTP
         if(emailCodeStatus=="emailOtpVerification")
         {
@@ -63,49 +63,38 @@ class AuthRepository {
             let detailsUser = [userdetails.user_id, userdetails.email, userdetails.userName, userdetails.dob, userdetails.address, userdetails.password, userdetails.mobile];
             const result =  await UserModel.createUser(detailsUser[0],detailsUser[1],detailsUser[2],detailsUser[3],detailsUser[4],detailsUser[5],detailsUser[6]);
            return structureResponse({'userName':"",'With-OTP':""}, 1,'Email-OTP [Verified] & User Added Successfully=>Thanks For SignUp' );
+            
         } 
     }
         //Email-Verification By Sending Link To User
+        console.log("not EnteredEmail-emailVerification-Area");
         if(emailCodeStatus=="sentForEmailVerification")
         {
+            console.log("EnteredEmail-emailVerification-Area1");
             let emailverificationcode = uuid.v4();
             let emailVerification = emailVerifications.sendEmail('prince.mobura@gmail.com',emailverificationcode);
             let result = await UserModel.tempCreateUser(body.user_id,body.email,body.userName,body.dob,body.address,body.password,body.mobile,emailverificationcode,undefined,undefined);
+            console.log(result);
             return structureResponse({'userName':"",'With-OTP':""}, 1,'Email-Link Verification Pending or In Process' );
         }
         if(emailCodeStatus=="emailVerification")
         {
             let userdetails = await UserModel.findByEmailVerificationCode(body);
+            console.log(userdetails.emailverificationcode,body);
             if(userdetails.emailverificationcode==body)
             {
             let detailsUser = [userdetails.user_id, userdetails.email, userdetails.userName, userdetails.dob, userdetails.address, userdetails.password, userdetails.mobile];
             const result =  await UserModel.createUser(detailsUser[0],detailsUser[1],detailsUser[2],detailsUser[3],detailsUser[4],detailsUser[5],detailsUser[6]);
-            return structureResponse({'userName':detailsUser[1],'EmailVerificationCode':userdetails.emailverificationcode}, 1,'Email [Verified] & User Added Successfully=>Thanks For SignUp' );
+           return structureResponse({'userName':"",'With-OTP':""}, 1,'Email [Verified] & User Added Successfully=>Thanks For SignUp' );
             }
-        }
-        //Mobile-Otp Verification
-        if(mobileCodeStatus=="sentForMobileVerification")
-        {
-            let mobileOtp = mobileOtpVerifications.generateOTP(+919995287248);
 
-            let result = await UserModel.tempCreateUser(body.user_id,body.email,body.userName,body.dob,body.address,body.password,body.mobile,undefined,undefined,undefined,mobileOtp.otp);
-            return structureResponse({'userName':"",'With-OTP':""}, 1,'Mobile-Otp Verification Pending or In Process' );
         }
-        if(mobileCodeStatus=="mobileOtpVerification")
-        {
-            let userdetails = await UserModel.findByMobileOtpCode(body);
-            let token = mobileOtpVerifications.generateOTP('+91995287248'); 
-            if(jwt.verify(token, 'SECRET_KEY') && token.otp==body)
-            {
-              let detailsUser = [userdetails.user_id, userdetails.email, userdetails.userName, userdetails.dob, userdetails.address, userdetails.password, userdetails.mobile];
-              const result =  await UserModel.createUser(detailsUser[0],detailsUser[1],detailsUser[2],detailsUser[3],detailsUser[4],detailsUser[5],detailsUser[6]);
-              return structureResponse({'userName':userdetails.userName,'With-OTP':token.otp}, 1,'Mobile-OTP [Verified]=> You Are Now Part Of The System' );
-            }
-        }
+    
       }
-    catch(err)
+      catch(err)
     {   
         console.log(err);
+
     }
     }
     userLogin = async (userName,password) => {
@@ -121,15 +110,11 @@ class AuthRepository {
     //jwt Token User Sign-In after Password - Match
     if(userName==user.userName && passwordMatch)
     {
-        let userr = user.id;
-        let token = jwt.sign({ userr }, 'SECRET_KEY', { expiresIn: '1h' });
-        if(jwt.verify(tokens, 'SECRET_KEY'))
-        {
-            console.log("Token-Verified=>");
-        }
+        let token = jwt.sign({ userId: user.id }, 'SECRET_KEY', { expiresIn: '1h' });
         UserModel.userLogin(userName,token);
         return structureResponse({'userName':userName,'token':token}, 1, 'Logged-IN SuccessFully');
     }
+   
     }
         return structureResponse({'userName':'','token':''}, 1, 'Invalid Credentials');
     }
@@ -137,6 +122,7 @@ class AuthRepository {
 {
     return structureResponse({'userName':'','token':''}, 1, Error);
 }
+        
    };
     refreshToken = async (body) => {
         const { email, password: pass, oldToken } = body;
@@ -144,7 +130,9 @@ class AuthRepository {
         if (!user) {
             throw new InvalidCredentialsException('Email not registered');
         }
+
         const isMatch = await bcrypt.compare(pass, user.password);
+
         if (!isMatch) {
             throw new InvalidCredentialsException('Incorrect password');
         }

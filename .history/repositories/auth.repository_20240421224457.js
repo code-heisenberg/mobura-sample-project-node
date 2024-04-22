@@ -80,26 +80,24 @@ class AuthRepository {
             {
             let detailsUser = [userdetails.user_id, userdetails.email, userdetails.userName, userdetails.dob, userdetails.address, userdetails.password, userdetails.mobile];
             const result =  await UserModel.createUser(detailsUser[0],detailsUser[1],detailsUser[2],detailsUser[3],detailsUser[4],detailsUser[5],detailsUser[6]);
-            return structureResponse({'userName':detailsUser[1],'EmailVerificationCode':userdetails.emailverificationcode}, 1,'Email [Verified] & User Added Successfully=>Thanks For SignUp' );
+            return structureResponse({'userName':"",'With-OTP':""}, 1,'Email [Verified] & User Added Successfully=>Thanks For SignUp' );
             }
         }
         //Mobile-Otp Verification
         if(mobileCodeStatus=="sentForMobileVerification")
         {
             let mobileOtp = mobileOtpVerifications.generateOTP(+919995287248);
-
-            let result = await UserModel.tempCreateUser(body.user_id,body.email,body.userName,body.dob,body.address,body.password,body.mobile,undefined,undefined,undefined,mobileOtp.otp);
+            let result = await UserModel.tempCreateUser(body.user_id,body.email,body.userName,body.dob,body.address,body.password,body.mobile,emailverificationcode,undefined,undefined,mobileOtp.otp);
             return structureResponse({'userName':"",'With-OTP':""}, 1,'Mobile-Otp Verification Pending or In Process' );
         }
         if(mobileCodeStatus=="mobileOtpVerification")
         {
-            let userdetails = await UserModel.findByMobileOtpCode(body);
-            let token = mobileOtpVerifications.generateOTP('+91995287248'); 
-            if(jwt.verify(token, 'SECRET_KEY') && token.otp==body)
+            let userdetails = await UserModel.findByEmailVerificationCode(body);
+            if(userdetails.emailverificationcode==body)
             {
               let detailsUser = [userdetails.user_id, userdetails.email, userdetails.userName, userdetails.dob, userdetails.address, userdetails.password, userdetails.mobile];
               const result =  await UserModel.createUser(detailsUser[0],detailsUser[1],detailsUser[2],detailsUser[3],detailsUser[4],detailsUser[5],detailsUser[6]);
-              return structureResponse({'userName':userdetails.userName,'With-OTP':token.otp}, 1,'Mobile-OTP [Verified]=> You Are Now Part Of The System' );
+              return structureResponse({'userName':"",'With-OTP':""}, 1,'Email [Verified] & User Added Successfully=>Thanks For SignUp' );
             }
         }
       }
@@ -121,12 +119,7 @@ class AuthRepository {
     //jwt Token User Sign-In after Password - Match
     if(userName==user.userName && passwordMatch)
     {
-        let userr = user.id;
-        let token = jwt.sign({ userr }, 'SECRET_KEY', { expiresIn: '1h' });
-        if(jwt.verify(tokens, 'SECRET_KEY'))
-        {
-            console.log("Token-Verified=>");
-        }
+        let token = jwt.sign({ userId: user.id }, 'SECRET_KEY', { expiresIn: '1h' });
         UserModel.userLogin(userName,token);
         return structureResponse({'userName':userName,'token':token}, 1, 'Logged-IN SuccessFully');
     }

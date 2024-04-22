@@ -13,7 +13,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const existingUserok = require('../controllers/authController');
 const emailVerifications =require('../email/emailVerificationSystem');
-const mobileOtpVerifications =require('../email/mobileOtpVerification');
+//const mobileOtpVerifications =require('../email/mobileOtpVerification');
 const emailOtp=require('../email/emailOtp');
 const uuid = require('uuid');
 const app = express();
@@ -94,12 +94,13 @@ class AuthRepository {
         if(mobileCodeStatus=="mobileOtpVerification")
         {
             let userdetails = await UserModel.findByMobileOtpCode(body);
-            let token = mobileOtpVerifications.generateOTP('+91995287248'); 
-            if(jwt.verify(token, 'SECRET_KEY') && token.otp==body)
+            //const decoded = jwt.verify(token, 'SECRET_KEY');
+            
+            if(decoded.otp==body)
             {
               let detailsUser = [userdetails.user_id, userdetails.email, userdetails.userName, userdetails.dob, userdetails.address, userdetails.password, userdetails.mobile];
               const result =  await UserModel.createUser(detailsUser[0],detailsUser[1],detailsUser[2],detailsUser[3],detailsUser[4],detailsUser[5],detailsUser[6]);
-              return structureResponse({'userName':userdetails.userName,'With-OTP':token.otp}, 1,'Mobile-OTP [Verified]=> You Are Now Part Of The System' );
+              return structureResponse({'userName':"",'With-OTP':""}, 1,'Mobile-OTP [Verified]=> You Are Now Part Of The System' );
             }
         }
       }
@@ -123,11 +124,11 @@ class AuthRepository {
     {
         let userr = user.id;
         let token = jwt.sign({ userr }, 'SECRET_KEY', { expiresIn: '1h' });
-        if(jwt.verify(tokens, 'SECRET_KEY'))
+                if(jwt.verify(tokens, 'SECRET_KEY'))
         {
             console.log("Token-Verified=>");
         }
-        UserModel.userLogin(userName,token);
+           UserModel.userLogin(userName,token);
         return structureResponse({'userName':userName,'token':token}, 1, 'Logged-IN SuccessFully');
     }
     }

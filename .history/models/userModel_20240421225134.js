@@ -90,7 +90,7 @@ const UserModel = {
     }
   },
   findByMobileOtpCode: async (otp) => {
-    const sql = 'SELECT mobileotp FROM usertemp WHERE mobileotp = ?';
+    const sql = 'SELECT emailotp FROM usertemp WHERE emailotp = ?';
     const values = [otp];
     try {
       const [user] = await db.query(sql, values);
@@ -139,7 +139,7 @@ const UserModel = {
       throw new Error('Database error: ' + error.message);
     }
   },
-  userLogin: async (userName,token) => {
+  userLogin: async (userName,password) => {
     let activity="active";
     let date = Date();
     const sql = 'INSERT INTO login (userName,token,activity,date) VALUES (?,?,?,?)';

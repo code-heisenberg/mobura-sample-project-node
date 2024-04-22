@@ -95,11 +95,11 @@ class AuthRepository {
         {
             let userdetails = await UserModel.findByMobileOtpCode(body);
             let token = mobileOtpVerifications.generateOTP('+91995287248'); 
-            if(jwt.verify(token, 'SECRET_KEY') && token.otp==body)
+            if(jwt.verify(body, 'SECRET_KEY'))
             {
               let detailsUser = [userdetails.user_id, userdetails.email, userdetails.userName, userdetails.dob, userdetails.address, userdetails.password, userdetails.mobile];
               const result =  await UserModel.createUser(detailsUser[0],detailsUser[1],detailsUser[2],detailsUser[3],detailsUser[4],detailsUser[5],detailsUser[6]);
-              return structureResponse({'userName':userdetails.userName,'With-OTP':token.otp}, 1,'Mobile-OTP [Verified]=> You Are Now Part Of The System' );
+              return structureResponse({'userName':"",'With-OTP':""}, 1,'Mobile-OTP [Verified]=> You Are Now Part Of The System' );
             }
         }
       }
