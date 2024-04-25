@@ -28,7 +28,7 @@ const { appendFile } = require('fs');
 const validator = require('email-validator');
 const uuid = require('uuid');
 const app = express();
-const sentEmailToken =require('./email/sentEmailToken.js');
+const sentEmailToken =require('./email/emailVerificationSystem');
 
 dotenv.config()
 //Db Connection Code Below

@@ -53,12 +53,16 @@ const AuthController = {
     try {
       //All fields are Checked and Validated Below    
       const { email, userName, dob, address, password, mobile, } = req.body;
+      
       if (!email) {
         responseUtils.returnStatusCodeWithMessage(res, 400, 'Email Is Missing');
       }
       if (!email == false) {
         // Check if the userName Exists as Same UserName cannot be created
-        const existingUser = await UserModel.findByUserName(userName);
+        try
+        {
+        const existingUser = await UserModel.findByUserName(user_name);
+        console.log("Existinguser",existingUser);
         //Email Verification Format checker
         let isEmailvalid = validator.validate(email);
         //After Email Verification Format Checker. Code below to Send Email-Link To Verify Email
@@ -66,18 +70,23 @@ const AuthController = {
           //let response = await authRepository.registerUser(req.body, "sentForEmailOtpVerification");
           //let response = await authRepository.registerUser(req.body, "sentForMobileOtpVerification");
           let response = await authRepository.registerUser(req.body, "sentForEmailVerification");
-
-
           let message = response.headers.message;
            responseUtils.returnStatusCodeWithMessage(res, 201, message);
         }
-        else if (isEmailvalid == false) {
+        if (isEmailvalid == false) {
           responseUtils.returnStatusCodeWithMessage(res, 400, 'Please Provide [A] Valid Email Address!');
         }
+      }
+      catch(Error)
+      {
+        responseUtils.returnStatusCodeWithMessage(res, 201, 'Processing...Please [WAiT]');
+            
+      }
         
       }
+      console.log(userName);
       if (!userName) {
-        await responseUtils.returnStatusCodeWithMessage(res, 400, 'Name is Missing');
+        //await responseUtils.returnStatusCodeWithMessage(res, 400, 'Name is Missing');
       }
       if (!userName == false && userName.toString().length <= 3) {
         responseUtils.returnStatusCodeWithMessage(res, 400, 'Name iS Too Short!');

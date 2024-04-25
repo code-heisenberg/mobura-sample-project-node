@@ -1,14 +1,14 @@
 // models/userModel.js
-const db = require('../configs/database');
+const db = require('../');
 const bcrypt = require('bcrypt');
-const { tables } = require('../utils/tableNames.utils');
+//const { tables } = require('../utils/tableNames.utils');
 
 const UserModel = {
   createUser: async (user_id,email,userName,dob,address,password,mobile) => {
     
     //const hashedPassword = await bcrypt.hash(password, 10);
     //console.log(user_id,email,userName,dob,address,password,mobile);
-    const sql = 'INSERT INTO user (user_id,email,userName,dob,address,password,mobile) VALUES (?,?,?,?,?,?,?)';
+    const sql = 'INSERT INTO users (user_id,email,userName,dob,address,password,mobile) VALUES (?,?,?,?,?,?,?)';
     const values = [user_id,email,userName,dob,address,password,mobile];
     
     try {
@@ -49,12 +49,14 @@ const UserModel = {
       throw new Error('Database error: ' + error.message);
     }
   },
-  findByUserName: async (userName) => {
-    const sql = 'SELECT * FROM user WHERE userName = ?';
-    const values = [userName];
+  findByUserName: async (username) => {
     try {
+    const sql = `SELECT user_name FROM users WHERE user_name =? `;
+    const values = [username];
+    
       const [user] = await db.query(sql,values);
-      return user;
+      console.log(user);
+      return data;
     } catch (error) {
       throw new Error('Database error: ' + error.message);
     }

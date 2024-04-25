@@ -2,7 +2,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
+//const userRoutes = require('./routes/userRoutes');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -12,12 +12,11 @@ app.use(bodyParser.json());
 
 // Routes
 app.use('/auth', authRoutes);
-app.use('/users', userRoutes);
+//app.use('/users', userRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
 //Verify Email Api
-
 
 
 // Start the server
