@@ -152,29 +152,65 @@ const AuthController = {
     try {
       //To get code from Email-Link
       const code = req.params.code;
-      let access = await userRights.apiAccessRights(code);
-      //Code to Get emailVerificationCode From Db with other fields to copy to userTable
-      let stringRights = JSON.stringify(access);
-      let strings = stringRights.split(",");
-      let mango = strings.find(item => item.trim() === "usersList");
-      if(mango)
+      const apiname ='usersList';
+      let access = await userRights.apiAccessRights(code,apiname);
+      
+      if(access!=null)
       {
-        console.log("AuthControlArea->Enetered access Area");
+      console.log("Full User [ACCESS] Details->"+access);
+      let toJson = access.toJSON();
+      let strings = Object.values(toJson);
+      let apiNameCheck = strings.find(item => item === 'datadelete');
+      if(apiNameCheck)
+      {
         let response = await authRepository.usersList();
         let message = response.headers.message;
         return responseUtils.returnStatusCodeWithMessage(res, 200,message );
       }
-       else
+      else
        {
-        responseUtils.returnStatusCodeWithMessage(res, 400, "You Are Not Authorised To Access This [Page]");
+        responseUtils.returnStatusCodeWithMessage(res, 400, "You Are Not Authorized To Access This [Page]");
+       } 
+      }
+      else
+       {
+        responseUtils.returnStatusCodeWithMessage(res, 400, "You Are Not Authorized To Access This [Page]");
        }
-      
     }
     catch (error) {
       console.error(error);
     }
   },
-
+  // dataSearch: async (req, res) => {
+  //   try {
+  //     //To get code from Email-Link
+  //     const code = req.params.code;
+  //     const apiname ='';
+  //     let access = await userRights.apiAccessRights(code,apiname);
+      
+  //     if(access!=null)
+  //     {
+  //     console.log("Full User [ACCESS] Details->"+access);
+  //     let toJson = access.toJSON();
+  //     let strings = Object.values(toJson);
+  //     let apiNameCheck = strings.find(item => item === 'send_sms_email_whatsapp');
+  //     if(apiNameCheck)
+  //     {
+  //       let response = await authRepository.usersList();
+  //       let message = response.headers.message;
+  //       return responseUtils.returnStatusCodeWithMessage(res, 200,message );
+  //     }
+       
+  //     }
+  //     else
+  //      {
+  //       responseUtils.returnStatusCodeWithMessage(res, 400, "You Are Not Authorized To Access This [Page]");
+  //      }
+  //   }
+  //   catch (error) {
+  //     console.error(error);
+  //   }
+  // },
 };
 
 module.exports = AuthController;

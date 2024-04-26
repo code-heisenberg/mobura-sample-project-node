@@ -117,9 +117,48 @@ const Users = sequelize.define('Users', {
     activity: {
       type: DataTypes.STRING,
       allowNull: true
-    }
+    },
    });
-
+//Create Table roleAndPermissions
+const Role_Permissions = sequelize.define('Role_Permissions', {
+  user_id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  user_name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  role: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  datasearch: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  datasave: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  dataupdate: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  datadelete: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  send_sms_email_whatsapp: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  apiname: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+ });
   // Create the table if it doesn't exist
 (async () => {
   await User_temps.sync();
@@ -128,7 +167,9 @@ const Users = sequelize.define('Users', {
   console.log("Users table created!");
   await Logins.sync();
   console.log("Login table created!");
+  await Role_Permissions.sync();
+  console.log("Role_Permissions table created!");
 })();
 
   //module.exports = user_temp,users;
-  module.exports = {User_temps,Users,Logins,sequelize};
+  module.exports = {User_temps,Users,Logins,Role_Permissions,sequelize};

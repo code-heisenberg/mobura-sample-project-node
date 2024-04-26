@@ -1,6 +1,6 @@
 
 //DATA ENTER SECTION FOR TABLE-USER
-const {User_temps,Users,Logins ,sequelize} = require('../configs/postgresdatabase');
+const {User_temps,Users,Logins,Role_Permissions,sequelize} = require('../configs/postgresdatabase');
 
 
 const userModel = {
@@ -45,13 +45,16 @@ const userModel = {
     }
     
   },
-  usersRights: async (user) => {
+  usersRights: async (user_name,apiname) => {
     try {
-      const userights = await Users.findOne({
-        where: { user_name: user }, // Replace 'username_here' with the actual username
-        attributes: ['userights'] // Fetch only the userights field
+      const permissions = await Role_Permissions.findOne({
+        attributes: ['datasearch', 'datasave', 'dataupdate', 'datadelete','send_sms_email_whatsapp','apiname'], // Fields you want to select
+        where: {
+            user_name: user_name,
+            apiname: apiname
+        }
       });
-      return userights.userights;
+      return permissions;
     } catch (error) {
       console.error('Error fetching user names:', error);
       throw error; // Rethrow the error to handle it in the caller
