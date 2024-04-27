@@ -159,6 +159,63 @@ const Role_Permissions = sequelize.define('Role_Permissions', {
     allowNull: true
   },
  });
+//Create Table roleAndPermissions
+const Candidates = sequelize.define('Candidates', {
+  user_id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  fullname: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  place: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  mobile: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  adhaarpandriving: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  category: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  send_sms_email_whatsapp_choice: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  countrylooking: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  qualifications: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  ielts: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  knowinglanguages: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  nursinglicensevalidity: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+ });
+
   // Create the table if it doesn't exist
 (async () => {
   await User_temps.sync();
@@ -169,7 +226,9 @@ const Role_Permissions = sequelize.define('Role_Permissions', {
   console.log("Login table created!");
   await Role_Permissions.sync();
   console.log("Role_Permissions table created!");
+  await Candidates.sync();
+  console.log("Candidates table created!");
 })();
 
   //module.exports = user_temp,users;
-  module.exports = {User_temps,Users,Logins,Role_Permissions,sequelize};
+  module.exports = {User_temps,Users,Logins,Role_Permissions,Candidates,sequelize};

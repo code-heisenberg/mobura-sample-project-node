@@ -171,5 +171,7 @@ class AuthRepository {
             console.log(Error);
     }
 }
+
+
 };
 module.exports = new AuthRepository;

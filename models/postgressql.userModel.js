@@ -1,6 +1,6 @@
 
 //DATA ENTER SECTION FOR TABLE-USER
-const {User_temps,Users,Logins,Role_Permissions,sequelize} = require('../configs/postgresdatabase');
+const {User_temps,Users,Logins,Role_Permissions,Candidates,sequelize} = require('../configs/postgresdatabase');
 
 
 const userModel = {
