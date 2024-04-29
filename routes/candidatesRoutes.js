@@ -1,7 +1,7 @@
 // routes/userRoutes.js
 const express = require('express');
 const router = express.Router();
-const CandidatesController = require('../controllers/postgressql.candidatescontrollers');
+const CandidatesController = require('../controllers/postgressql.candidatescontroller');
 
 router.get('/', CandidatesController.findAllCandidates);
 router.get('/:id', CandidatesController.findCandidatesById);

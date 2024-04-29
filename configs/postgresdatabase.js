@@ -120,7 +120,7 @@ const Users = sequelize.define('Users', {
     },
    });
 //Create Table roleAndPermissions
-const Role_Permissions = sequelize.define('Role_Permissions', {
+const candi_Role_Permissions = sequelize.define('candi_Role_Permissions', {
   user_id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -128,17 +128,13 @@ const Role_Permissions = sequelize.define('Role_Permissions', {
   },
   user_name: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: true
   },
   role: {
     type: DataTypes.STRING,
-    allowNull: false
-  },
-  datasearch: {
-    type: DataTypes.STRING,
     allowNull: true
   },
-  datasave: {
+  datasearch: {
     type: DataTypes.STRING,
     allowNull: true
   },
@@ -150,23 +146,73 @@ const Role_Permissions = sequelize.define('Role_Permissions', {
     type: DataTypes.STRING,
     allowNull: true
   },
-  send_sms_email_whatsapp: {
+  send_sms_services: {
     type: DataTypes.STRING,
     allowNull: true
   },
-  apiname: {
+  pageactions: {
     type: DataTypes.STRING,
     allowNull: true
   },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  mobile: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  full_name: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  address1: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  address2: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  address3: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  send_whatsapp_service: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  send_email_service: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  qualifications: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  languages_known: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  preferred_country: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  place: {
+    type: DataTypes.STRING,
+    allowNull: true
+  }
+
+
  });
 //Create Table roleAndPermissions
 const Candidates = sequelize.define('Candidates', {
-  user_id: {
+  candidate_id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true
   },
-  fullname: {
+  full_name: {
     type: DataTypes.STRING,
     allowNull: false
   },
@@ -182,7 +228,7 @@ const Candidates = sequelize.define('Candidates', {
     type: DataTypes.STRING,
     allowNull: true
   },
-  adhaarpandriving: {
+  adhaar_pan_driving: {
     type: DataTypes.STRING,
     allowNull: true
   },
@@ -190,11 +236,11 @@ const Candidates = sequelize.define('Candidates', {
     type: DataTypes.STRING,
     allowNull: true
   },
-  send_sms_email_whatsapp_choice: {
+  send_sms_service: {
     type: DataTypes.STRING,
     allowNull: true
   },
-  countrylooking: {
+  preferred_country: {
     type: DataTypes.STRING,
     allowNull: true
   },
@@ -202,18 +248,22 @@ const Candidates = sequelize.define('Candidates', {
     type: DataTypes.STRING,
     allowNull: true
   },
-  ielts: {
+  languages_known: {
     type: DataTypes.STRING,
     allowNull: true
   },
-  knowinglanguages: {
+  nursing_license_validity: {
     type: DataTypes.STRING,
     allowNull: true
   },
-  nursinglicensevalidity: {
+  send_whatsapp_service: {
     type: DataTypes.STRING,
     allowNull: true
   },
+  send_email_service: {
+    type: DataTypes.STRING,
+    allowNull: true
+  }
  });
 
   // Create the table if it doesn't exist
@@ -224,11 +274,12 @@ const Candidates = sequelize.define('Candidates', {
   console.log("Users table created!");
   await Logins.sync();
   console.log("Login table created!");
-  await Role_Permissions.sync();
-  console.log("Role_Permissions table created!");
+  await candi_Role_Permissions.sync();
+  console.log("candi_Role_Permissions table created!");
   await Candidates.sync();
   console.log("Candidates table created!");
+  
 })();
 
   //module.exports = user_temp,users;
-  module.exports = {User_temps,Users,Logins,Role_Permissions,Candidates,sequelize};
+  module.exports = {User_temps,Users,Logins,candi_Role_Permissions,Candidates,sequelize};

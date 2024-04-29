@@ -7,7 +7,7 @@ const otpGenerator = require('otp-generator');
 const hashPassword = require('../configs/passwordEncrypt');
 //const { Config } = require('../configs/config');
 //const hashedPassword = require('../configs/passwordEncrypt');
-const UserModel = require('../models/CandidatesModel');
+const UserModel = require('../models/visaprocessModel');
 const OTPModel = require('../models/otp.model');
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -17,9 +17,6 @@ const mobileOtpVerifications =require('../email/mobileOtpVerification');
 const emailOtp=require('../email/emailOtp');
 const uuid = require('uuid');
 const app = express();
-//const CandidateController = require('../controllers/postgressql.candidatescontroller');
-const { json } = require('body-parser');
-const { get } = require('../routes/authRoutes');
 app.use(bodyParser.json()); // Parse JSON bodies
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -36,10 +33,12 @@ const {
     UpdateFailedException,
     UnexpectedException
 } = require('../utils/exceptions/database.exception');
-
-//const userModel = require('../models/postgressql.userModel');
-class candidatesRepository {
-    createCandidate =  async (full_name,body) => {
+const AuthController = require('../controllers/authController');
+const { json } = require('body-parser');
+const { get } = require('../routes/authRoutes');
+const userModel = require('../models/postgressql.userModel');
+class visaprocessRepository {
+    createCandidate =  async (body,emailCodeStatus) => {
         try
         {
             
@@ -55,7 +54,7 @@ class candidatesRepository {
         //// Check if the password is correct
         try
         {
-            
+            return
             
         }
         catch(Error)
@@ -63,16 +62,12 @@ class candidatesRepository {
                 console.log(Error);
         }
     }
-    updateCandidate = async (full_name,body) => {
+    updateCandidate = async () => {
         //// Check if the password is correct
         try
         {
-            let candidateUpdate = await UserModel.dataUpdate(full_name,body);
-            if(candidateUpdate)
-            {
-                return structureResponse({'Candidate':'','Name':full_name}, 1,"Record Updated=> [Successfully]")
-            }
-                
+            
+                return            
         }
         catch(Error)
         {
@@ -81,4 +76,4 @@ class candidatesRepository {
     }
 
 }
-module.exports = new candidatesRepository;
+module.exports = new visaprocessRepository;
