@@ -16,9 +16,13 @@ const apiAccessRights = async (code, apiname,field) => {
       const userupdate = await candidateModel.usersRights(user, apiname);
       //console.log("Candidate_Id Based Results=>"+userupdate); // Logging the user for debugging
       return userupdate;
+
     }
+    
       if (!field) {
+        
         const userupdate = await candidateModel.usersRights(user, apiname);
+        const fieldChecker = fieldValidations.editValidations(,)
         if(userupdate)
         {
           const userightsData = await candidateModel.returnUserRightsData(userupdate);
@@ -30,7 +34,8 @@ const apiAccessRights = async (code, apiname,field) => {
         {
           return null
         }
-                
+        
+        
       }
 
     } catch (error) {

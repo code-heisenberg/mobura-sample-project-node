@@ -162,13 +162,9 @@ const CandidatesController = {
         //console.log("Have-Access");
         let permissionFieldsRights = await userRights.apiAccessRights(code,apiname);
         let bodykeys= Object.keys(req.body);
-        let result = await candidateModel.getValidFields(code,apiname,bodykeys);
-        if(result!="Success")
-        {
-          //return responseUtils.returnStatusCodeWithMessage(res, 200,);
-          return res.status(400).json({ ALERT: JSON.stringify(result)+"<=You Don't Have Permissions to Update These Fields" });
-        }
-        if(permissionFieldsRights && result=='Success')
+        let result = await candidateModel.getValidFields('james',apiname,bodykeys);
+        console.log("Have-Access-->"+ result);
+        if(permissionFieldsRights && result)
         {
           let response = await candidatesRepository.updateCandidate(id, req.body);
           let message = response.headers.message;

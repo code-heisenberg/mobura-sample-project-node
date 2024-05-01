@@ -128,15 +128,16 @@ const CandidatesModel = {
     },
     getValidFields: async (code, apiname, body) => {
         try {
-            const decoded = await jwt.verify(code, 'SECRET_KEY');
-            let user_name = decoded.username;
+            const decoded = await verifyAsync(code, 'SECRET_KEY');
+            //console.log("decoded====>"+decoded);
+            //let user_name = decoded.username;
             //console.log("user_name====>"+user_name);
             if (body) {
                 const excludeColumns = ['user_id', 'user_name', 'role', 'datasearch', 'dataupdate', 'datadelete', 'pageactions', 'send_sms_service', 'send_whatsapp_service', 'send_email_service', 'createdAt', 'updatedAt']
                 const users = await candi_Role_Permissions.findAll({
                     attributes: { exclude: excludeColumns },
                     where: {
-                        user_name: user_name,
+                        user_name: code,
                         pageactions: apiname,
                         [Op.or]: Object.keys(candi_Role_Permissions.rawAttributes).map(field => {
                             return {

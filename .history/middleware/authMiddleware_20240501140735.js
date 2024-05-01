@@ -19,6 +19,7 @@ const apiAccessRights = async (code, apiname,field) => {
     }
       if (!field) {
         const userupdate = await candidateModel.usersRights(user, apiname);
+        const fieldChecker = fieldValidations.editValidations(,)
         if(userupdate)
         {
           const userightsData = await candidateModel.returnUserRightsData(userupdate);

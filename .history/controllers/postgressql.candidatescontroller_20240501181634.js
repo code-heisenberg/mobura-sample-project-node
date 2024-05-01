@@ -165,8 +165,7 @@ const CandidatesController = {
         let result = await candidateModel.getValidFields(code,apiname,bodykeys);
         if(result!="Success")
         {
-          //return responseUtils.returnStatusCodeWithMessage(res, 200,);
-          return res.status(400).json({ ALERT: JSON.stringify(result)+"<=You Don't Have Permissions to Update These Fields" });
+          return responseUtils.returnStatusCodeWithMessage(res, 200,result+"<=You Don't Have Permissions to Update These Fields");
         }
         if(permissionFieldsRights && result=='Success')
         {

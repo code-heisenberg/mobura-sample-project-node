@@ -2,11 +2,7 @@
 const { User_temps, Users, Logins, candi_Role_Permissions, Candidates, sequelize } = require('../configs/postgresdatabase');
 const { Op, literal } = require('sequelize');
 const { json } = require('body-parser');
-const jwt = require('jsonwebtoken');
-const { Module } = require('module');
-const { decode } = require('punycode');
 const fieldValidations = require('../middleware/editValidationChecker');
-const auth = require('../middleware/authMiddleware');
 
 const CandidatesModel = {
     createUser_Temp: async (email, user_name, dob, address, password, mobile, userights, emailverificationcode, emailotp, otpvalidity) => {
@@ -128,9 +124,8 @@ const CandidatesModel = {
     },
     getValidFields: async (code, apiname, body) => {
         try {
-            const decoded = await jwt.verify(code, 'SECRET_KEY');
+            const decoded = await verifyAsync(code, 'SECRET_KEY');
             let user_name = decoded.username;
-            //console.log("user_name====>"+user_name);
             if (body) {
                 const excludeColumns = ['user_id', 'user_name', 'role', 'datasearch', 'dataupdate', 'datadelete', 'pageactions', 'send_sms_service', 'send_whatsapp_service', 'send_email_service', 'createdAt', 'updatedAt']
                 const users = await candi_Role_Permissions.findAll({
@@ -157,7 +152,7 @@ const CandidatesModel = {
                     });
                     
                     const fieldChecker = fieldValidations.editValidations(body, refinedDataArray);
-                    //console.log('fieldChecker------->'+fieldChecker);
+                    console.log('fieldChecker------->'+fieldChecker);
                     return fieldChecker; // Ensure you return the refined data here
 
                 } else {

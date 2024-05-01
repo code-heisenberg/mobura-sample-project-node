@@ -159,16 +159,12 @@ const CandidatesController = {
         return responseUtils.returnStatusCodeWithMessage(res, 400, "You Are Not Authorized To Access This [SERVICE]");
       }
       if (Object.keys(req.body).length !== 0) {
-        //console.log("Have-Access");
+        console.log("Have-Access");
         let permissionFieldsRights = await userRights.apiAccessRights(code,apiname);
         let bodykeys= Object.keys(req.body);
-        let result = await candidateModel.getValidFields(code,apiname,bodykeys);
-        if(result!="Success")
-        {
-          //return responseUtils.returnStatusCodeWithMessage(res, 200,);
-          return res.status(400).json({ ALERT: JSON.stringify(result)+"<=You Don't Have Permissions to Update These Fields" });
-        }
-        if(permissionFieldsRights && result=='Success')
+        let result = await candidateModel.getValidFields(username,apiname,body);
+        //console.log("Have-Access-->"+ bodykeys);
+        if(permissionFieldsRights && result)
         {
           let response = await candidatesRepository.updateCandidate(id, req.body);
           let message = response.headers.message;

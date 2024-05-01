@@ -162,7 +162,7 @@ const CandidatesController = {
         //console.log("Have-Access");
         let permissionFieldsRights = await userRights.apiAccessRights(code,apiname);
         let bodykeys= Object.keys(req.body);
-        let result = await candidateModel.getValidFields(code,apiname,bodykeys);
+        let result = await candidateModel.getValidFields('james',apiname,bodykeys);
         if(result!="Success")
         {
           //return responseUtils.returnStatusCodeWithMessage(res, 200,);

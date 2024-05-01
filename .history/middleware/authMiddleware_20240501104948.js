@@ -3,7 +3,6 @@ const { Module } = require('module');
 const { decode } = require('punycode');
 const util = require('util');
 const candidateModel = require('../models/CandidatesModel');
-const fieldValidations = require('../middleware/editValidationChecker');
 const verifyAsync = util.promisify(jwt.verify);
 const apiAccessRights = async (code, apiname,field) => {
   try {
@@ -16,8 +15,11 @@ const apiAccessRights = async (code, apiname,field) => {
       const userupdate = await candidateModel.usersRights(user, apiname);
       //console.log("Candidate_Id Based Results=>"+userupdate); // Logging the user for debugging
       return userupdate;
+
     }
+    
       if (!field) {
+        
         const userupdate = await candidateModel.usersRights(user, apiname);
         if(userupdate)
         {
@@ -30,7 +32,8 @@ const apiAccessRights = async (code, apiname,field) => {
         {
           return null
         }
-                
+        
+        
       }
 
     } catch (error) {

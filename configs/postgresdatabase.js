@@ -244,6 +244,14 @@ const Candidates = sequelize.define('Candidates', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  address1: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  address2: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   qualifications: {
     type: DataTypes.STRING,
     allowNull: true

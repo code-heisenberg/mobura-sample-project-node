@@ -136,7 +136,7 @@ const CandidatesModel = {
                 const users = await candi_Role_Permissions.findAll({
                     attributes: { exclude: excludeColumns },
                     where: {
-                        user_name: user_name,
+                        user_name: code,
                         pageactions: apiname,
                         [Op.or]: Object.keys(candi_Role_Permissions.rawAttributes).map(field => {
                             return {
