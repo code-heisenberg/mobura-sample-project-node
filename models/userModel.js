@@ -17,10 +17,10 @@ const UserModel = {
       throw new Error('Database error: ' + error.message);
     }
   },
-  tempCreateUser: async (user_id,email,userName,dob,address,password,mobile,emailVerificationCode,emailotp,otpvalidity) => {
+  tempCreateUser: async (user_id,email,userName,dob,address,password,mobile,emailVerificationCode,emailotp,mobileotp) => {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const sql = 'INSERT INTO usertemp (user_id,email,userName,dob,address,password,mobile,emailverificationcode,emailotp,otpvalidity) VALUES (?,?,?,?,?,?,?,?,?,?)';
-    const values = [user_id,email,userName,dob,address,hashedPassword,mobile,emailVerificationCode,emailotp,otpvalidity];
+    const sql = 'INSERT INTO usertemp (user_id,email,userName,dob,address,password,mobile,emailverificationcode,emailotp,mobileotp) VALUES (?,?,?,?,?,?,?,?,?,?)';
+    const values = [user_id,email,userName,dob,address,hashedPassword,mobile,emailVerificationCode,emailotp,mobileotp];
     try {
       await db.query(sql, values);
     } catch (error) {

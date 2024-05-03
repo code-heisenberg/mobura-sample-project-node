@@ -4,17 +4,18 @@ const {User_temps,Users,Logins,Role_Permissions,Candidates,sequelize} = require(
 
 
 const userModel = {
-    createUser_Temp : async(email,user_name,dob,address,password,mobile,userights,emailverificationcode,emailotp,otpvalidity)=> {
+    createUser_Temp : async(email,user_name,dob,address,password,mobile,emailverificationcode,emailotp,mobileotp)=> {
         try {
-          const user_temps = await User_temps.create({ email,user_name,dob,address,password,mobile,userights,emailverificationcode,emailotp,otpvalidity});
+          //console.log('mobileotp==>'+mobileotp);
+          const user_temps = await User_temps.create({ email,user_name,dob,address,password,mobile,emailverificationcode,emailotp,mobileotp});
           console.log("User_temp created:", user_temps.toJSON());
         } catch (error) {
           console.error("Error creating user:", error);
         }
       },   
- createUsers : async(email,user_name,dob,address,password,mobile,userights)=> {
+ createUsers : async(email,user_name,dob,address,password,mobile)=> {
     try {
-      const users = await Users.create({ email,user_name,dob,address,password,mobile,userights });
+      const users = await Users.create({ email,user_name,dob,address,password,mobile });
       console.log("User created:", users.toJSON());
       return users;
     } catch (error) {
@@ -93,6 +94,19 @@ findByEmailVerificationOtp:  async(emailotp)=> {
       
      const user_temps = await User_temps.findOne({
         where: { emailotp }
+      });
+      //console.log(users); // Logging the user for debugging
+      return user_temps; // Returning the user
+    } catch (error) {
+      throw new Error('Database error: ' + error.message);
+    }
+
+},
+findByMobileOtpCode:  async(mobileotp)=> {
+  try {    
+      
+     const user_temps = await User_temps.findOne({
+        where: { mobileotp }
       });
       //console.log(users); // Logging the user for debugging
       return user_temps; // Returning the user

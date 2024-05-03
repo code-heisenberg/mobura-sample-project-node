@@ -3,10 +3,11 @@ const bcrypt = require('bcrypt');
 const uuid = require('uuid');
 //const UserModel = require('../models/userModel');
 const UserModel = require('../models/postgressql.userModel');
-//const { use, link } = require('../routes/authRoutes');
+const { use, link } = require('../routes/authRoutes');
 const { restart } = require('nodemon');
 const responseUtils = require('../utils/responseUtils');
-const candidatesRepository = require('../repositories/postgressql.visaprocessrepository');
+const candidatesRepository = require('../repositories/postgressql.candidatesrepository');
+const candidateModel = require('../models/CandidatesModel');
 const express = require('express');
 const bodyParser = require('body-parser');
 const { json } = require('body-parser');
@@ -16,7 +17,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 const validator = require('email-validator');
 const { Console, error } = require('console');
 const userRights = require('../middleware/authMiddleware');
-const VisaprocessController = {
+const CandidatesController = {
   createCandidates: async (req, res) => {
     try {
       //To get code from Email-Link
@@ -88,7 +89,7 @@ const VisaprocessController = {
       console.error(error);
     }
   },
-  visaprocessSave: async (req, res) => {
+  candidatesSave: async (req, res) => {
     try {
       //To get code from Email-Link
       const code = req.params.code;
@@ -102,27 +103,19 @@ const VisaprocessController = {
       console.error(error);
     }
   },
-  visaprocessDelete: async (req, res) => {
+  candidatesDelete: async (req, res) => {
     try {
       const code = req.params.code;
       const apiname = 'candidatesDelete';
-      let access = await userRights.apiAccessRights(code, apiname);
-      if (access != null) {
-        console.log("Full User [ACCESS] Details->" + access);
-        let toJson = access.toJSON();
-        let strings = Object.values(toJson);
-        let apiNameCheck = strings.find(item => item === 'datadelete');
-        if (apiNameCheck) {
-          //let response = await candidatesRepository.deleteCandidate();
-          let message = response.headers.message;
-          return responseUtils.returnStatusCodeWithMessage(res, 200, message);
-        }
-        else {
-          responseUtils.returnStatusCodeWithMessage(res, 400, "You Are Not Authorized To Access This [SERVICE]");
+      let permissionFields = await userRights.apiAccessRights(code, apiname);
+       if (permissionFields != null) {
+         if (permissionFields) {
+          console.log("DeleteAction Section");
+          return responseUtils.returnStatusCodeWithMessage(res, 200, "Have Access");
         }
       }
       else {
-        responseUtils.returnStatusCodeWithMessage(res, 400, "You Are Not Authorized To Access This [PAGE]");
+        responseUtils.returnStatusCodeWithMessage(res, 400, "You Are Not Authorized To Access This [SERVICE]");
       }
 
     }
@@ -130,21 +123,51 @@ const VisaprocessController = {
       console.error(error);
     }
   },
-  visaprocessUpdate: async (req, res) => {
+  candidatesUpdate: async (req, res) => {
     try {
       const code = req.params.code;
-      const action = req.params.word;
-      const apiname = 'visaprocessUpdate';
-      let access = await userRights.apiAccessRights(code, apiname, action);
-      if (access) {
-        console.log("Have-Access" + access);
-        return responseUtils.returnStatusCodeWithMessage(res, 200, "Success");
+      const id = req.params.id;
+      const apiname = 'candidatesUpdate';
+      if (Object.keys(req.body).length == 0) {
+        let candidateDetails = await candidateModel.findByCandidateId(id);
+        let permissionFieldsRights = await userRights.apiAccessRights(code,apiname);
+        //console.log(permissionFieldsRights);
+        if(permissionFieldsRights)
+        {
+          return responseUtils.returnStatusCodeWithMessage(res, 200, {candidateDetails,'Permissions':permissionFieldsRights});
+        }
+        else
+        {
+          return responseUtils.returnStatusCodeWithMessage(res, 400, "You Are Not Authorized To Access [EDIT->SERVICE]");  
+        }
+        //console.log("Candidate_Id Based Results=>"+JSON.stringify(permissionFieldsRights)); // Logging the user for debugging
+        
       }
-      
-      if (!access) {
-        return responseUtils.returnStatusCodeWithMessage(res, 400, "You Are Not Authorized To Access This [SERViCE]");
+      if (Object.keys(req.body).length == undefined) {
+        return responseUtils.returnStatusCodeWithMessage(res, 400, "You Are Not Authorized To Access This [SERVICE]");
       }
-
+      if (Object.keys(req.body).length !== 0) {
+        //console.log("Have-Access");
+        let permissionFieldsRights = await userRights.apiAccessRights(code,apiname);
+        let bodykeys= Object.keys(req.body);
+        let result = await candidateModel.getValidFields(code,apiname,bodykeys);
+        if(result!="Success")
+        {
+          //return responseUtils.returnStatusCodeWithMessage(res, 200,);
+          return res.status(400).json({ ALERT: JSON.stringify(result)+"<=You Don't Have Permissions to Update These Fields" });
+        }
+        if(permissionFieldsRights && result=='Success')
+        {
+          let response = await candidatesRepository.updateCandidate(id, req.body);
+          let message = response.headers.message;
+          return responseUtils.returnStatusCodeWithMessage(res, 200, message);
+        }
+        else
+        {
+          return responseUtils.returnStatusCodeWithMessage(res, 400, "You Are Not Authorized To Access This [SERVICE]");
+        }
+        
+      }
       // else
       //  {
       //   responseUtils.returnStatusCodeWithMessage(res, 400, "You Are Not Authorized To Access This [PAGE]");
@@ -152,7 +175,7 @@ const VisaprocessController = {
 
     }
     catch (error) {
-      return responseUtils.returnStatusCodeWithMessage(res, 400, "NO SUCH => [SERVICE] Available TO Access");
+      console.error(error);
     }
   },
 };
@@ -164,4 +187,4 @@ const VisaprocessController = {
 // {
 //}
 
-module.exports = VisaprocessController;
+module.exports = CandidatesController;

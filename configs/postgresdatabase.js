@@ -40,15 +40,11 @@ const User_temps = sequelize.define('User_temps', {
     type: DataTypes.STRING,
     allowNull: true
   },
-  userights: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
   emailotp: {
     type: DataTypes.STRING,
     allowNull: true
   },
-  otpvalidity: {
+  mobileotp: {
     type: DataTypes.STRING,
     allowNull: true
   },
@@ -86,10 +82,7 @@ const Users = sequelize.define('Users', {
     mobile: {
       type: DataTypes.STRING,
       allowNull: false
-    },
-    userights: {
-      type: DataTypes.STRING,
-      allowNull: false
+       
     },
  
   });

@@ -50,6 +50,61 @@ const CandidatesModel = {
         }
 
     },
+    usersRights: async (user_name, apiname, field) => {
+        try {
+            //     //Code to Check UserRights
+            //Code below is to delete update button permission check
+            if (field) {
+                //console.log(user_name,apiname,field);
+                const permissions = await candi_Role_Permissions.findOne({
+                    attributes: ['role'], // Fields you want to select
+                    where: {
+                        user_name: user_name,
+                        pageactions: {
+                            [Op.like]: `%${apiname}%`
+                        }
+
+                    }
+                });
+                //console.log('permissions=>'+permissions);
+                return permissions;
+            }
+            //Code Below is to Fetch Only Needed column value without many Column-Names and with limited column names
+            if (!field) {
+                const excludeColumns = ['user_id', 'user_name', 'role', 'datasearch', 'dataupdate', 'datadelete', 'pageactions', 'send_sms_service', 'send_whatsapp_service', 'send_email_service', 'createdAt', 'updatedAt']
+                const users = await candi_Role_Permissions.findAll({
+                    attributes: { exclude: excludeColumns },
+                    where: {
+                        user_name: user_name,
+                        pageactions: apiname,
+                        [Op.or]: Object.keys(candi_Role_Permissions.rawAttributes).map(field => {
+                            return {
+                                [field]: {
+                                    [Op.not]: null
+                                }
+                            };
+                        })
+                    }
+                });
+                if (users.length > 0) {
+                    let refinedDataArray = users.map(user => {
+                        const refinedData = Object.values(user.toJSON()).filter(value => value !== null);
+                        return refinedData;
+
+                    });
+                    return refinedDataArray; // Ensure you return the refined data here
+
+                } else {
+                    return null; // Or any appropriate value when no users are found
+                }
+                // Usage
+
+            }
+        } catch (err) {
+
+        }
+
+    },
     returnUserRightsData: async (data) => {
         const quotedFields = ["'" + String(data).split(",").join(',') + "'"];
         const cleanedString = quotedFields.toString().replace(/^'|'$/g, '');
@@ -172,61 +227,7 @@ const CandidatesModel = {
         }
 
     },
-    usersRights: async (user_name, apiname, field) => {
-        try {
-            //     //Code to Check UserRights
-            //Code below is to delete update button permission check
-            if (field) {
-                //console.log(user_name,apiname,field);
-                const permissions = await candi_Role_Permissions.findOne({
-                    attributes: ['role'], // Fields you want to select
-                    where: {
-                        user_name: user_name,
-                        pageactions: {
-                            [Op.like]: `%${apiname}%`
-                        }
-
-                    }
-                });
-                //console.log('permissions=>'+permissions);
-                return permissions;
-            }
-            //Code Below is to Fetch Only Needed column value without many Column-Names and with limited column names
-            if (!field) {
-                const excludeColumns = ['user_id', 'user_name', 'role', 'datasearch', 'dataupdate', 'datadelete', 'pageactions', 'send_sms_service', 'send_whatsapp_service', 'send_email_service', 'createdAt', 'updatedAt']
-                const users = await candi_Role_Permissions.findAll({
-                    attributes: { exclude: excludeColumns },
-                    where: {
-                        user_name: user_name,
-                        pageactions: apiname,
-                        [Op.or]: Object.keys(candi_Role_Permissions.rawAttributes).map(field => {
-                            return {
-                                [field]: {
-                                    [Op.not]: null
-                                }
-                            };
-                        })
-                    }
-                });
-                if (users.length > 0) {
-                    let refinedDataArray = users.map(user => {
-                        const refinedData = Object.values(user.toJSON()).filter(value => value !== null);
-                        return refinedData;
-
-                    });
-                    return refinedDataArray; // Ensure you return the refined data here
-
-                } else {
-                    return null; // Or any appropriate value when no users are found
-                }
-                // Usage
-
-            }
-        } catch (err) {
-
-        }
-
-    },
+    
 
     findByCandidateId: async (candidate_id) => {
         try {

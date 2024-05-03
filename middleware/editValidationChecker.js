@@ -10,7 +10,7 @@ async function editValidations (bodyKey, permittedFields){
 
         if (extraFields.length > 0) {
             //console.log("extraFields------>"+extraFields);
-            return {WARNiNG: `Extra Fields Found: ${extraFields.join(', ')}` };
+            return 'Extra Fields Found:'+ `${extraFields.join(', ')}`; 
         }
         if(extraFields.length==0)
         {

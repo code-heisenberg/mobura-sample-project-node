@@ -1,3 +1,4 @@
+const express = require('express');
 const bcrypt = require('bcrypt');
 const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
@@ -8,8 +9,6 @@ const hashPassword = require('../configs/passwordEncrypt');
 //const { Config } = require('../configs/config');
 //const hashedPassword = require('../configs/passwordEncrypt');
 const UserModel = require('../models/postgressql.userModel');
-const OTPModel = require('../models/otp.model');
-const express = require('express');
 const bodyParser = require('body-parser');
 //const existingUserok = require('../controllers/authController');
 const emailVerifications =require('../email/emailVerificationSystem');
@@ -36,9 +35,8 @@ const {
 const AuthController = require('../controllers/authController');
 const { json } = require('body-parser');
 const { get } = require('../routes/authRoutes');
-const userModel = require('../models/postgressql.userModel');
 class AuthRepository {
-    registerUser =  async (body,emailCodeStatus) => {
+    registerUser =  async (body,emailCodeStatus,mobile) => {
         //const { email, user_name, dob, address, password, mobile, } = body;
         // Email-OTP Verifications Done Below
         //console.log("AuthRepo-->"+body);
@@ -61,7 +59,7 @@ class AuthRepository {
         if ( body == userdetails.emailotp) {
             // Success: OTP matched
             let detailsUser = [userdetails.email, userdetails.user_name, userdetails.dob, userdetails.address, userdetails.password, userdetails.mobile];
-            const result =  await UserModel.createUsers(detailsUser[0],detailsUser[1],detailsUser[2],detailsUser[3],detailsUser[4],detailsUser[5],detailsUser[6]);
+            const result =  await UserModel.createUsers(detailsUser[0],detailsUser[1],detailsUser[2],detailsUser[3],detailsUser[4],detailsUser[5]);
            return structureResponse({'user_name':userdetails.user_name,'With-OTP':userdetails.emailotp}, 1,'Email-OTP [Verified] & User Added Successfully=>Thanks For SignUp' );
         } 
     }
@@ -73,7 +71,7 @@ class AuthRepository {
             //console.log(body.email);
             let emailverificationcode = uuid.v4();
             let emailVerification = emailVerifications.sendEmail('prince.mobura@gmail.com',emailverificationcode);
-            let result = await UserModel.createUser_Temp(body[0],body[1],body[2],body[3],body[4],body[5],body[6],emailverificationcode,null,null);
+            let result = await UserModel.createUser_Temp(body[0],body[1],body[2],body[3],body[4],body[5],emailverificationcode,null,null);
             return structureResponse({'user_name':"",'With-OTP':""}, 1,'Email-Link Verification Pending or In Process' );
         }
         if(emailCodeStatus=="emailVerification")
@@ -83,30 +81,39 @@ class AuthRepository {
             //console.log("userdetails=>"+userdetails);
             if(userdetails.emailverificationcode == body)
             {
-            let detailsUser = [userdetails.email, userdetails.user_name, userdetails.dob, userdetails.address, userdetails.password, userdetails.mobile,userdetails.userights];
-            const result =  await UserModel.createUsers(detailsUser[0],detailsUser[1],detailsUser[2],detailsUser[3],detailsUser[4],detailsUser[5],detailsUser[6]);
+            let detailsUser = [userdetails.email, userdetails.user_name, userdetails.dob, userdetails.address, userdetails.password, userdetails.mobile];
+            const result =  await UserModel.createUsers(detailsUser[0],detailsUser[1],detailsUser[2],detailsUser[3],detailsUser[4],detailsUser[5]);
             return structureResponse({'user_name':detailsUser[1],'EmailVerificationCode':userdetails[7]}, 1,'Email [Verified] & User Added Successfully=>Thanks For SignUp' );
             }
         }
         //Mobile-Otp Verification
+        
         if(emailCodeStatus=="sentForMobileOtpVerification")
         {
-            let mobileOtp = mobileOtpVerifications.generateOTP(+919995287248);
-
-            let result = await UserModel.tempCreateUser(body.email,body.user_name,body.dob,body.address,body.password,body.mobile,undefined,undefined,undefined,mobileOtp.otp);
-            //let result = await UserModel.createUser_Temp(body[0],body[1],body[2],body[3],body[4],body[5],null,null,null);
-            return structureResponse({'user_name':"",'With-OTP':""}, 1,'Mobile-Otp Verification Pending or In Process' );
+            let mobileOtp = await mobileOtpVerifications.generateOTP(mobile);
+            let optmobile = mobileOtp.token;
+            let greeks = mobileOtp.otp;
+            const convertedPassword = await bcrypt.hash(body.password, 10);
+            let token = await jwt.sign({greeks}, 'SECRET_KEY', { expiresIn: '35m' });
+            let result = await UserModel.createUser_Temp(body.email,body.user_name,body.dob,body.address,convertedPassword,body.mobile,undefined,token,mobileOtp.otp);
+            
+                                    
+            return structureResponse({'user_name':"",'token':""}, 1,'Mobile-Otp Verification Pending or In Process' );
+             
         }
         if(emailCodeStatus=="mobileOtpVerification")
         {
+            
             let userdetails = await UserModel.findByMobileOtpCode(body);
-            let token = mobileOtpVerifications.generateOTP('+91995287248'); 
-            if(jwt.verify(token, 'SECRET_KEY') && token.otp==body)
-            {
-              let detailsUser = [userdetails.user_id, userdetails.email, userdetails.user_name, userdetails.dob, userdetails.address, userdetails.password, userdetails.mobile];
-              const result =  await UserModel.createUser(detailsUser[0],detailsUser[1],detailsUser[2],detailsUser[3],detailsUser[4],detailsUser[5],detailsUser[6]);
-              return structureResponse({'user_name':userdetails.user_name,'With-OTP':token.otp}, 1,'Mobile-OTP [Verified]=> You Are Now Part Of The System' );
-            }
+            let greeks = userdetails.emailotp;
+            const jwttoken = await jwt.verify(greeks, 'SECRET_KEY');
+            console.log('jwttoken=>'+ JSON.stringify(jwttoken));
+             if(jwttoken.greeks == body)
+             {
+               let detailsUser = [userdetails.email, userdetails.user_name, userdetails.dob, userdetails.address, userdetails.password, userdetails.mobile];
+               const result =  await UserModel.createUsers(detailsUser[0],detailsUser[1],detailsUser[2],detailsUser[3],detailsUser[4],detailsUser[5]);
+               return structureResponse({'user_name':userdetails.user_name,'With-OTP':""}, 1,'Mobile-OTP [Verified]=> You Are Now Part Of The System' );
+             }
         }
       }
     catch(err)
